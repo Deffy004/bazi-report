@@ -485,9 +485,13 @@ function onProvinceChange(){
 }
 function onCityChange(){ /* 空函数，保留 */ }
 
-/* ========== 兑换码验证（腾讯云开发云函数 HTTP 访问） ========== */
-// 部署后将下方地址替换为云函数 HTTP 访问服务地址
-const REDEEM_API='https://你的环境ID.service.tcloudbase.com/verifyCode';
+/* ========== 兑换码（本地校验 + 设备绑定） ========== */
+const VALID_CODES=[
+  'TQ-8K3M-2P9X','TQ-5N7Q-1W4Z','TQ-3L6R-9D2C','TQ-7F4T-8B5H','TQ-2J9V-6K3M',
+  'TQ-4P8W-1N7Q','TQ-9D3C-5F2T','TQ-6M4X-8R1B','TQ-1H7K-3L9V','TQ-5Z2N-6W4P',
+  'TQ-YYHA-GLG2','TQ-UFN9-TQNW','TQ-4JPL-VV2K','TQ-S5FH-7R2C','TQ-4A4Q-9KW7',
+  'TQ-HVJ5-VDAN','TQ-3SUF-LZQ4','TQ-UKAE-UWUP','TQ-S7QK-CWQU','TQ-HLM8-QHJB',
+];
 
 /* ========== 十神映射 ========== */
 const TIAN_GAN=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
@@ -1027,31 +1031,26 @@ function startCalc(){
   },1500);
 }
 
-async function verifyRedeem(){
+function verifyRedeem(){
   const code=document.getElementById('redeemCode').value.trim().toUpperCase();
   const err=document.getElementById('redeemError');
-  const btn=event.target;
   if(!code){err.style.display='block';err.textContent='请输入兑换码';return}
-  if(REDEEM_API.indexOf('你的环境ID')>=0){err.style.display='block';err.textContent='系统未配置，请联系管理员';return}
-  err.style.display='none';
-  btn.disabled=true;btn.textContent='验证中...';
-  try{
-    const res=await fetch(REDEEM_API+'?code='+encodeURIComponent(code));
-    const data=await res.json();
-    if(data.ok){
-      localStorage.setItem('xingqi_code',code);
-      renderResult();
-      showPage('pageResult');
-    }else{
-      err.style.display='block';
-      err.textContent=data.msg||'兑换码无效，请检查后重试';
-    }
-  }catch(e){
+  if(!VALID_CODES.includes(code)){err.style.display='block';err.textContent='兑换码无效，请检查后重试';return}
+  // 读取本设备已用兑换码
+  const storeKey='xq_used_codes';
+  let used={};
+  try{used=JSON.parse(localStorage.getItem(storeKey)||'{}')}catch(e){used={}}
+  if(used[code]){
     err.style.display='block';
-    err.textContent='网络异常，请稍后重试';
-  }finally{
-    btn.disabled=false;btn.textContent='✨ 立即解锁';
+    err.textContent='该兑换码已在当前设备使用过，无法重复使用';
+    return;
   }
+  used[code]=Date.now();
+  try{localStorage.setItem(storeKey,JSON.stringify(used))}catch(e){}
+  err.style.display='none';
+  localStorage.setItem('xingqi_code',code);
+  renderResult();
+  showPage('pageResult');
 }
 
 /* ========== 十天干卡通形象（阳干阴干造型不同） ========== */
