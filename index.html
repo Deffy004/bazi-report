@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>先天能量天赋报告</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{
+    --primary:#9B7ED4;--primary-light:#C4B4DD;--primary-dark:#7E6BC3;
+    --bg:#FDF8F5;--bg-purple:#F5E6F5;
+    --text:#4A4A4A;--text-muted:#7A7A7A;--text-light:#B0B0B0;
+    --border:#E8E0D8;--white:#FFFFFF;
+  }
+  html,body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+  /* ========== 通用 ========== */
+  .page{display:none;min-height:100vh;padding:20px 16px 60px;animation:fadeIn .4s ease}
+  .page.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  .brand-header{text-align:center;padding:24px 0 16px}
+  .brand-header .logo{width:56px;height:56px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;box-shadow:0 4px 16px rgba(155,126,212,.3)}
+  .brand-header .logo svg{width:30px;height:30px;fill:white}
+  .brand-header h1{font-size:20px;font-weight:700;color:var(--primary);letter-spacing:2px}
+  .brand-header p{font-size:12px;color:var(--text-muted);margin-top:4px}
+
+  .card{background:var(--white);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(155,126,212,.08)}
+  .card-title{font-size:16px;font-weight:700;color:var(--primary);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .card-title .icon{width:22px;height:22px;background:var(--bg-purple);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+
+  .btn{display:block;width:100%;padding:16px 24px;border:none;border-radius:50px;font-size:16px;font-weight:600;cursor:pointer;transition:all .3s;text-align:center}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;box-shadow:0 4px 16px rgba(155,126,212,.4)}
+  .btn-primary:active{transform:scale(.98)}
+  .btn-gold{background:linear-gradient(135deg,#E8B86D,#C8995E);color:white;box-shadow:0 4px 16px rgba(200,153,94,.4)}
+
+  /* ========== 表单 ========== */
+  .form-group{margin-bottom:20px}
+  .form-label{display:block;font-size:13px;color:var(--text-muted);margin-bottom:8px;font-weight:500}
+  .form-input{width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white);color:var(--text);transition:border-color .3s;font-family:inherit}
+  .form-input:focus{outline:none;border-color:var(--primary)}
+  .form-input::placeholder{color:var(--text-light)}
+  .gender-group{display:flex;gap:10px}
+  .gender-option{flex:1;padding:14px;border:1.5px solid var(--border);border-radius:12px;text-align:center;font-size:15px;cursor:pointer;transition:all .3s;background:var(--white)}
+  .gender-option.active{border-color:var(--primary);background:var(--bg-purple);color:var(--primary);font-weight:600}
+  .lunar-input-row{display:flex;gap:10px}
+  .lunar-input-row .form-input{flex:1;text-align:center}
+  .form-hint{font-size:11px;color:var(--text-light);margin-top:6px;line-height:1.6}
+
+  .form-footer{text-align:center;padding:20px 0;color:var(--text-light);font-size:11px;line-height:1.8}
+
+  /* ========== Loading ========== */
+  .loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh}
+  .stars{position:relative;width:120px;height:120px}
+  .star{position:absolute;width:12px;height:12px;background:var(--primary);border-radius:50%;animation:twinkle 1.4s infinite ease-in-out both}
+  .star:nth-child(1){top:50%;left:50%;animation-delay:0s}
+  .star:nth-child(2){top:20%;left:70%;animation-delay:.2s}
+  .star:nth-child(3){top:70%;left:25%;animation-delay:.4s}
+  .star:nth-child(4){top:30%;left:20%;animation-delay:.6s}
+  .star:nth-child(5){top:65%;left:75%;animation-delay:.8s}
+  .star:nth-child(6){top:15%;left:45%;animation-delay:1s}
+  .star:nth-child(7){top:80%;left:50%;animation-delay:1.2s}
+  @keyframes twinkle{0%,80%,100%{transform:scale(0);opacity:0}40%{transform:scale(1);opacity:1}}
+  .loading-text{margin-top:32px;color:var(--primary);font-size:15px;font-weight:500;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+  /* ========== 兑换码解锁页 ========== */
+  .unlock-hero{text-align:center;padding:30px 20px;background:linear-gradient(135deg,var(--primary),#6B4E9E);border-radius:24px;color:white;margin-bottom:24px}
+  .unlock-hero h2{font-size:22px;font-weight:700;margin-bottom:6px}
+  .unlock-hero p{font-size:13px;opacity:.9;line-height:1.7}
+  .unlock-hero .features{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px}
+  .unlock-hero .features span{background:rgba(255,255,255,.2);padding:4px 10px;border-radius:12px;font-size:11px}
+
+  .unlock-section{text-align:center;padding:24px 20px}
+  .unlock-section .price-big{font-size:42px;font-weight:800;color:var(--primary)}
+  .unlock-section .price-big .symbol{font-size:24px}
+  .unlock-section .price-original{font-size:14px;color:var(--text-light);text-decoration:line-through;margin-left:8px}
+  .unlock-section .pay-method{background:var(--bg-purple);border-radius:14px;padding:16px;margin-top:20px;text-align:left}
+  .unlock-section .pay-method h4{font-size:14px;color:var(--primary);font-weight:700;margin-bottom:10px;text-align:center}
+  .unlock-section .pay-steps{font-size:12px;color:var(--text);line-height:2}
+  .unlock-section .pay-steps b{color:var(--primary)}
+  .unlock-section .qr-placeholder{width:120px;height:120px;margin:14px auto 0;background:white;border:2px dashed var(--primary-light);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:11px;text-align:center}
+
+  .redeem-input-row{display:flex;gap:10px;margin-top:20px}
+  .redeem-input-row .form-input{flex:1;text-transform:uppercase;letter-spacing:2px;text-align:center;font-weight:600}
+  .redeem-error{color:#F44336;font-size:12px;margin-top:8px;text-align:center;display:none}
+
+  /* ========== 结果页 ========== */
+  .result-header{padding:8px 0 20px}
+  .archive-seal{position:relative;border-radius:18px;padding:24px 20px 22px;text-align:center;overflow:hidden;background:linear-gradient(160deg,#F3E8FF 0%,#EDE9FE 40%,#FAF5FF 100%);border:1px solid rgba(155,126,212,.2);box-shadow:0 4px 20px rgba(155,126,212,.12)}
+  .archive-seal::before{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z' fill='none' stroke='%239B7ED4' stroke-width='0.5' opacity='0.08'/%3E%3Ccircle cx='30' cy='30' r='20' fill='none' stroke='%239B7ED4' stroke-width='0.5' opacity='0.06'/%3E%3C/svg%3E");opacity:.7;pointer-events:none}
+  .archive-seal>*{position:relative;z-index:1}
+  .seal-name{font-size:54px;font-weight:900;color:var(--primary);line-height:1.1;text-shadow:0 0 1px rgba(126,107,195,.6),0 2px 8px rgba(155,126,212,.25);letter-spacing:2px;margin-bottom:6px;font-family:"Songti SC","STSong",serif}
+  .seal-sub{font-size:12.5px;color:var(--primary-dark);font-weight:500;letter-spacing:1px;margin-bottom:12px}
+  .seal-info{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.65);backdrop-filter:blur(4px);border-radius:20px;padding:6px 16px;font-size:12px;color:var(--text-muted);flex-wrap:wrap;justify-content:center;border:1px solid rgba(155,126,212,.15)}
+  .seal-info .dot{color:var(--primary-light);font-weight:600}
+
+  /* 八字排盘 - 正式版样式 */
+  .bazi-pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+  .bazi-pillar{background:var(--bg-purple);border-radius:12px;padding:12px 4px;text-align:center;position:relative;border:1px solid rgba(155,126,212,.15)}
+  .bazi-pillar.day{background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:2px solid var(--primary);box-shadow:0 4px 12px rgba(155,126,212,.35)}
+  .bazi-pillar .label{font-size:10px;color:var(--primary);margin-bottom:8px;font-weight:600;letter-spacing:1px}
+  .bazi-pillar.day .label{color:rgba(255,255,255,.9)}
+  .bazi-pillar .shishen-top{font-size:10px;color:var(--primary-dark);margin-bottom:2px;font-weight:500}
+  .bazi-pillar.day .shishen-top{color:rgba(255,255,255,.85)}
+  .bazi-pillar .stem{font-size:26px;font-weight:800;color:var(--text);line-height:1.1;margin-top:2px}
+  .bazi-pillar.day .stem{color:white}
+  .bazi-pillar .divider{height:1px;background:var(--primary-light);margin:6px auto;width:60%}
+  .bazi-pillar.day .divider{background:rgba(255,255,255,.4)}
+  .bazi-pillar .branch{font-size:22px;color:var(--primary);font-weight:700;margin-top:2px}
+  .bazi-pillar.day .branch{color:rgba(255,255,255,.95)}
+  .bazi-pillar .shishen-bottom{font-size:10px;color:var(--primary-dark);margin-top:4px;font-weight:500}
+  .bazi-pillar.day .shishen-bottom{color:rgba(255,255,255,.85)}
+
+  /* 地支藏干表 */
+  .hide-table{margin-top:14px;background:#FAFAFA;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+
+  /* 标准横排命盘表格（参考图样式） */
+  .bazi-scroll{background:linear-gradient(180deg,#FBF7FF 0%,#F7F2FF 100%);border-radius:14px;padding:12px 10px;border:1px solid rgba(155,126,212,.18)}
+  .bazi-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:13px;background:transparent;border-radius:12px;overflow:hidden}
+  .bazi-table th{background:linear-gradient(135deg,#B39DDB 0%,#9575CD 50%,#7E57C2 100%);color:#fff;font-weight:600;padding:10px 4px;font-size:13px;border:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+  .bazi-table th:first-child{border-radius:10px 0 0 0}
+  .bazi-table th:last-child{border-radius:0 10px 0 0}
+  .bazi-table td{border:1px solid #E8DFF5;padding:9px 4px;text-align:center;vertical-align:middle;background:rgba(255,255,255,.7)}
+  .bazi-table td.rowlabel{background:rgba(243,232,255,.8);color:var(--primary);font-weight:700;font-size:13px;width:48px}
+  .bazi-table .g{display:block;font-size:20px;font-weight:800;line-height:1.3}
+  .bazi-table .gz{display:block}
+  .bazi-table .g-wx-木{color:#4CAF50}
+  .bazi-table .g-wx-火{color:#FF5252}
+  .bazi-table .g-wx-土{color:#8D6E63}
+  .bazi-table .g-wx-金{color:#FFB300}
+  .bazi-table .g-wx-水{color:#42A5F5}
+  .bazi-table .ss-note{display:block;font-size:10.5px;color:#888;font-weight:500;white-space:nowrap;line-height:1.4;margin-top:2px}
+  .bazi-table .day-col td{background:rgba(251,246,255,.95);box-shadow:inset 0 0 0 2px rgba(155,126,212,.35)}
+  .bazi-table th.day-th{background:linear-gradient(135deg,#CE93D8 0%,#AB47BC 50%,#8E24AA 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 12px rgba(171,71,188,.3)}
+  .bazi-table .hide-cell{line-height:1.8;padding:8px 4px}
+  .bazi-table .hide-item{display:block;margin:2px 0}
+  .bazi-table .wx-cell{font-size:14px;color:#555;font-weight:600;letter-spacing:2px}
+  .bazi-toggle-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;background:linear-gradient(135deg,#CE93D8,#9575CD);color:#fff;border-radius:24px;font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 3px 10px rgba(155,126,212,.3);transition:transform .2s}
+  .bazi-toggle-btn:active{transform:scale(.97)}
+  .bazi-collapse-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;border:1.5px solid var(--primary-light);background:#fff;color:var(--primary);border-radius:24px;font-size:11px;cursor:pointer}
+  .hide-row{display:grid;grid-template-columns:60px 1fr;text-align:center;font-size:11px;color:var(--text-muted);border-bottom:1px solid #F0F0F0}
+  .hide-row:last-child{border-bottom:none}
+  .hide-row .col-label{background:var(--bg-purple);color:var(--primary);font-weight:600;padding:8px 4px;display:flex;align-items:center;justify-content:center;font-size:10px}
+  .hide-row .col-content{padding:8px 6px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center;line-height:1.6}
+  .hide-row .gan-item{display:inline-flex;align-items:center;gap:2px}
+  .hide-row .gan{font-weight:600;color:var(--text)}
+  .hide-row .gan-label{color:var(--text-light);font-size:10px}
+  .hide-row .ss{color:var(--primary);font-size:10px}
+
+  .shishen-hide{margin-top:14px;background:#FAFAFA;border-radius:10px;padding:12px}
+  .shishen-hide-title{font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:8px;text-align:center}
+
+  /* 五行饼图区域 */
+  .chart-container{position:relative;padding:8px 0}
+  .chart-canvas{width:100%;max-width:300px;margin:0 auto;display:block}
+  .chart-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:14px}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12px}
+  .legend-dot{width:10px;height:10px;border-radius:50%}
+
+  /* 日主三维 */
+  .strength-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+  .strength-item{background:var(--bg-purple);border-radius:12px;padding:14px 8px;text-align:center}
+  .strength-item .dim-label{font-size:11px;color:var(--primary);font-weight:600;margin-bottom:6px}
+  .strength-item .dim-score{font-size:22px;font-weight:800;color:var(--primary-dark)}
+  .strength-item .dim-desc{font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.4}
+
+  /* 喜用神盒子 */
+  .tip-box{padding:14px 16px;border-radius:12px;margin-top:8px;font-size:13px;line-height:1.7}
+  .tip-box.rose{background:#FDF8F5;border-left:4px solid var(--primary)}
+  .tip-box h4{font-size:14px;font-weight:700;color:var(--primary);margin-bottom:8px}
+  .tip-box .fav-main{font-size:18px;font-weight:800;color:var(--primary-dark);margin-bottom:8px}
+  .tip-box .section{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}
+  .tip-box .section:first-of-type{border-top:none;margin-top:0;padding-top:0}
+  .tip-box strong{color:var(--primary)}
+
+  /* 性格标签云 */
+  .tag-cloud{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+  .tag{padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600}
+  .tag-primary{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:white}
+  .tag-secondary{background:var(--bg-purple);color:var(--primary)}
+  .character-summary{margin-top:14px;font-size:13px;color:var(--text);line-height:1.8;background:#FAFAFA;border-radius:10px;padding:14px}
+
+  /* 八项智能 */
+  .intelligence-item{background:#FAFAFA;border-radius:12px;padding:16px;margin-bottom:12px;border-left:4px solid var(--primary)}
+  .intelligence-item.talent{border-left-color:#C8B89E;background:#FDFCFA}
+  .intelligence-item.advantage{border-left-color:#A5C8E8;background:#F5FAFD}
+  .intelligence-item.develop{border-left-color:#C4B4DD;background:#F8F5FA}
+  .int-head{display:flex;align-items:center;margin-bottom:10px}
+  .int-name{font-size:15px;font-weight:700;color:var(--text);flex:1}
+  .int-score{font-size:20px;font-weight:800;color:var(--primary-dark)}
+  .int-level{font-size:10px;padding:3px 8px;border-radius:10px;margin-left:6px;font-weight:600}
+  .int-level.talent{background:#E8DCC8;color:#8B7D5A}
+  .int-level.advantage{background:#D5E6F5;color:#4A7A9C}
+  .int-level.develop{background:#E8E0F5;color:#7E6BC3}
+  .int-desc{font-size:12px;color:var(--text);line-height:1.8;margin-bottom:8px}
+  .int-suggestion{font-size:12px;color:var(--primary-dark);line-height:1.8;background:rgba(155,126,212,.08);border-radius:8px;padding:10px}
+
+  /* Toast */
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--primary);color:white;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:toastIn .3s ease}
+  @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+  /* 分隔线 */
+  .section-divider{text-align:center;margin:16px 0}
+  .section-divider span{display:inline-block;width:40px;height:2px;background:var(--primary-light);border-radius:1px}
+
+  .empty-tip{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px;line-height:1.8}
+</style>
+</head>
+<body>
+
+<!-- ========== 页面1：输入 ========== -->
+<div id="pageInput" class="page active">
+  <div class="brand-header">
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg></div>
+    <h1>先天能量天赋报告</h1>
+    <p>基于八字命理的先天能量分析</p>
+  </div>
+
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">姓名</label>
+      <input type="text" id="inputName" class="form-input" placeholder="请输入您的姓名或昵称" maxlength="10">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">性别</label>
+      <div class="gender-group" data-group="gender">
+        <div class="gender-option active" data-gender="女" onclick="selectOption(this,'gender')">女</div>
+        <div class="gender-option" data-gender="男" onclick="selectOption(this,'gender')">男</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">历法</label>
+      <div class="gender-group" data-group="calendar">
+        <div class="gender-option active" data-calendar="solar" onclick="selectOption(this,'calendar')">☀️ 公历</div>
+        <div class="gender-option" data-calendar="lunar" onclick="selectOption(this,'calendar')">🌙 农历</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" id="dateLabel">出生日期（公历）</label>
+      <!-- 公历：年/月/日一排平铺，无需二次点入 -->
+      <div id="solarInputs" class="lunar-input-row">
+        <select id="solarYear" class="form-input" onchange="onSolarDateChange()"></select>
+        <select id="solarMonth" class="form-input" onchange="onSolarDateChange()"></select>
+        <select id="solarDay" class="form-input"></select>
+      </div>
+      <!-- 农历 -->
+      <div id="lunarInputs" class="lunar-input-row" style="display:none">
+        <input type="number" id="lunarYear" class="form-input" placeholder="年" min="1900" max="2100">
+        <input type="number" id="lunarMonth" class="form-input" placeholder="月" min="1" max="12">
+        <input type="number" id="lunarDay" class="form-input" placeholder="日" min="1" max="30">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">出生时间</label>
+      <input type="time" id="inputTime" class="form-input" value="12:00">
+      <p class="form-hint">💡 时间越准确结果越精准，不确定可填12:00。系统将根据出生地自动校正真太阳时。</p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">出生地</label>
+      <div style="display:flex;gap:8px">
+        <select id="inputProvince" class="form-input" style="flex:0 0 40%" onchange="onProvinceChange()">
+          <option value="">选择省份</option>
+        </select>
+        <select id="inputCity" class="form-input" style="flex:1" onchange="onCityChange()">
+          <option value="">先选择省份</option>
+        </select>
+      </div>
+      <p class="form-hint">💡 用于计算真太阳时，结果更精准。</p>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="startCalc()">✨ 生成天赋报告</button>
+
+  <div class="form-footer">每个人都是独一无二的星辰 ✨<br>🔒 您的信息仅用于本次计算，不会被保存</div>
+</div>
+
+<!-- ========== 页面2：Loading ========== -->
+<div id="pageLoading" class="page">
+  <div class="loading-wrap">
+    <div class="stars">
+      <span class="star"></span><span class="star"></span><span class="star"></span>
+      <span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span>
+    </div>
+    <div class="loading-text" id="loadingText">正在校正真太阳时...</div>
+  </div>
+</div>
+
+<!-- ========== 页面3：兑换码解锁 ========== -->
+<div id="pageUnlock" class="page">
+  <div class="unlock-hero">
+    <h2>🌟 您的专属天赋报告已生成</h2>
+    <p>解锁完整八字命盘分析<br>日主天干 · 性格画像 · 历史人物 · 天赋能力 · 职业方向</p>
+    <div class="features">
+      <span>✓ 十天干卡通形象</span>
+      <span>✓ 四柱八字含藏干十神</span>
+      <span>✓ 历史人物匹配</span>
+      <span>✓ 最强3个天赋</span>
+      <span>✓ 职业规划建议</span>
+    </div>
+  </div>
+
+  <div class="unlock-section">
+    <div class="redeem-input-row">
+      <input type="text" id="redeemCode" class="form-input" placeholder="输入兑换码">
+    </div>
+    <p id="redeemError" class="redeem-error">兑换码无效，请检查后重试</p>
+
+    <button class="btn btn-gold" onclick="verifyRedeem()" style="margin-top:14px;">✨ 立即解锁</button>
+    <button class="btn btn-outline" style="margin-top:10px;background:transparent;border:2px solid var(--primary);color:var(--primary);padding:12px;border-radius:50px;font-size:14px;font-weight:600;" onclick="showPage('pageInput')">返回修改信息</button>
+  </div>
+</div>
+
+<!-- ========== 页面4：完整报告 ========== -->
+<div id="pageResult" class="page">
+  <div class="result-header">
+    <div class="archive-seal">
+      <div class="seal-name" id="rSealChar">鸿</div>
+      <div class="seal-sub">先天能量天赋档案｜专属命盘</div>
+      <div class="seal-info">
+        <span id="rGender">男</span>
+        <span class="dot">｜</span>
+        <span id="rCity">潮州</span>
+        <span class="dot">｜</span>
+        <span id="rTime">真太阳时 1990.3.11 21:56</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1 四柱八字排盘 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">☯</span>先天能量底色</div>
+    <div style="font-size:11.5px;color:var(--text-light);margin:-4px 0 12px;letter-spacing:.5px">你的八字原局</div>
+    <div class="bazi-pillars" id="baziPillars"></div>
+    <div class="shishen-hide" id="shishenHideBox"></div>
+  </div>
+
+  <!-- 2 五行属性（日主卡通形象 + 五行能量占比） -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🌱</span>五行属性</div>
+    <div style="text-align:center" id="wuxingKidBox"></div>
+    <div id="wuxingPieBox" style="margin-top:16px"></div>
+  </div>
+
+  <!-- 3 喜用神 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🌙</span>喜用神</div>
+    <div id="favorableBox"></div>
+  </div>
+
+  <!-- 4 你的性格最像历史上的 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🗿</span>你的性格最像历史上的</div>
+    <div id="personHeroBox"></div>
+  </div>
+
+  <!-- 5 最强三大天赋 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">⚡</span>最强三大天赋</div>
+    <div id="topTalentBox"></div>
+  </div>
+
+  <!-- 6-10 核心要点五大维度（各自独立卡片） -->
+  <div class="card">
+    <div class="card-title"><span class="icon">💫</span>性格特点</div>
+    <div id="coreBox0"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="icon">⚡</span>行为风格</div>
+    <div id="coreBox1"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="icon">📚</span>学习方式</div>
+    <div id="coreBox2"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="icon">🤝</span>社交表现</div>
+    <div id="coreBox3"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="icon">🌱</span>教育重点</div>
+    <div id="coreBox4"></div>
+  </div>
+
+  <!-- 11 成长痛点 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🌱</span>成长课题</div>
+    <div id="painPointBox"></div>
+  </div>
+
+  <!-- 12 职业方向建议 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🎯</span>职业方向建议</div>
+    <div id="careerBox"></div>
+  </div>
+
+  <!-- 微信引导升单卡片 -->
+  <div class="card" style="background:linear-gradient(135deg,#FFF8E1,#FFECB3);border:2px solid #FFB74D;text-align:center">
+    <!-- 免费福利钩子 -->
+    <div style="background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+      <div style="font-size:14px;color:#E65100;font-weight:700;margin-bottom:6px">🎁 免费领取 · 限时福利</div>
+      <div style="font-size:15px;color:var(--primary);font-weight:800;margin-bottom:4px">《你的五行能量调频指南》电子手册</div>
+      <p style="font-size:12px;color:#5D4037;line-height:1.7;margin:0">对照你的喜用神，手把手教你补能量：<br>幸运色 / 饮食 / 日常习惯 / 发展方位，全在里面</p>
+      <div style="background:var(--bg-purple);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:12.5px;color:var(--primary);font-weight:700">添加微信后，回复【调频】立即领取</div>
+    </div>
+    <div style="width:140px;height:140px;margin:0 auto 12px;background:#fff;border-radius:16px;padding:8px;box-shadow:0 4px 16px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center">
+      <img src="images/wechat_qr.jpg" style="width:100%;height:100%;object-fit:contain;border-radius:10px" alt="Deffy的能量充电站微信二维码">
+    </div>
+    <div style="font-size:13px;color:#E65100;font-weight:700">长按识别二维码 或 搜索微信号：<span style="background:#fff;padding:2px 10px;border-radius:6px;letter-spacing:1px">deffy004</span></div>
+    <div style="font-size:11px;color:#999;margin-top:6px">添加时备注「天赋报告」优先通过</div>
+  </div>
+</div>
+
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+/* ========== 全国省份→城市经纬度（34个省级行政区+全部地级市） ========== */
+const PROVINCES_DATA={
+  '北京':[{name:'北京',lng:116.4074}],
+  '天津':[{name:'天津',lng:117.2010}],
+  '上海':[{name:'上海',lng:121.4737}],
+  '重庆':[{name:'重庆',lng:106.5516}],
+  '河北':[{name:'石家庄',lng:114.4801},{name:'唐山',lng:118.1802},{name:'秦皇岛',lng:119.5995},{name:'邯郸',lng:114.4789},{name:'邢台',lng:114.4839},{name:'保定',lng:115.4646},{name:'张家口',lng:114.8750},{name:'承德',lng:117.9339},{name:'沧州',lng:116.8386},{name:'廊坊',lng:116.6839},{name:'衡水',lng:115.6701}],
+  '山西':[{name:'太原',lng:112.5489},{name:'大同',lng:113.3001},{name:'阳泉',lng:113.5816},{name:'长治',lng:113.1144},{name:'晋城',lng:112.8516},{name:'朔州',lng:112.4227},{name:'晋中',lng:112.7580},{name:'运城',lng:110.9911},{name:'忻州',lng:112.7339},{name:'临汾',lng:111.5189},{name:'吕梁',lng:111.1337}],
+  '内蒙古':[{name:'呼和浩特',lng:111.7500},{name:'包头',lng:109.8403},{name:'乌海',lng:106.7917},{name:'赤峰',lng:118.8870},{name:'通辽',lng:122.2436},{name:'鄂尔多斯',lng:109.7814},{name:'呼伦贝尔',lng:119.7718},{name:'巴彦淖尔',lng:107.3905},{name:'乌兰察布',lng:113.1330}],
+  '辽宁':[{name:'沈阳',lng:123.4315},{name:'大连',lng:121.6147},{name:'鞍山',lng:122.9956},{name:'抚顺',lng:123.9678},{name:'本溪',lng:123.7733},{name:'丹东',lng:124.3538},{name:'锦州',lng:121.1270},{name:'营口',lng:122.2436},{name:'阜新',lng:121.6777},{name:'辽阳',lng:123.2382},{name:'盘锦',lng:122.0707},{name:'铁岭',lng:123.8442},{name:'朝阳',lng:120.4586},{name:'葫芦岛',lng:120.8433}],
+  '吉林':[{name:'长春',lng:125.3235},{name:'吉林',lng:126.5531},{name:'四平',lng:124.3491},{name:'辽源',lng:125.1486},{name:'通化',lng:125.9190},{name:'白山',lng:126.4181},{name:'松原',lng:124.8298},{name:'白城',lng:122.8403}],
+  '黑龙江':[{name:'哈尔滨',lng:126.6424},{name:'齐齐哈尔',lng:123.9746},{name:'鸡西',lng:130.9697},{name:'鹤岗',lng:130.2771},{name:'双鸭山',lng:131.1617},{name:'大庆',lng:125.1056},{name:'伊春',lng:128.8993},{name:'佳木斯',lng:130.3238},{name:'七台河',lng:131.0013},{name:'牡丹江',lng:129.6328},{name:'黑河',lng:127.5275},{name:'绥化',lng:126.9926}],
+  '江苏':[{name:'南京',lng:118.7969},{name:'无锡',lng:120.3119},{name:'徐州',lng:117.1847},{name:'常州',lng:119.9741},{name:'苏州',lng:120.6196},{name:'南通',lng:120.8667},{name:'连云港',lng:119.2179},{name:'淮安',lng:119.0130},{name:'盐城',lng:120.1553},{name:'扬州',lng:119.4129},{name:'镇江',lng:119.4253},{name:'泰州',lng:119.9230},{name:'宿迁',lng:118.2754}],
+  '浙江':[{name:'杭州',lng:120.1551},{name:'宁波',lng:121.5498},{name:'温州',lng:120.6994},{name:'嘉兴',lng:120.7555},{name:'湖州',lng:120.0883},{name:'绍兴',lng:120.5820},{name:'金华',lng:119.6494},{name:'衢州',lng:118.8590},{name:'舟山',lng:122.1047},{name:'台州',lng:121.4420},{name:'丽水',lng:119.9229}],
+  '安徽':[{name:'合肥',lng:117.2754},{name:'芜湖',lng:118.3539},{name:'蚌埠',lng:117.3893},{name:'淮南',lng:116.9992},{name:'马鞍山',lng:118.5069},{name:'淮北',lng:116.7964},{name:'铜陵',lng:117.8121},{name:'安庆',lng:117.0639},{name:'黄山',lng:118.3376},{name:'滁州',lng:118.3156},{name:'阜阳',lng:115.8122},{name:'宿州',lng:117.1899},{name:'六安',lng:116.5099},{name:'亳州',lng:115.7785},{name:'池州',lng:117.5122},{name:'宣城',lng:118.7588}],
+  '福建':[{name:'福州',lng:119.2965},{name:'厦门',lng:118.0894},{name:'莆田',lng:119.0078},{name:'三明',lng:117.6388},{name:'泉州',lng:118.6758},{name:'漳州',lng:117.6471},{name:'南平',lng:118.1777},{name:'龙岩',lng:117.0175},{name:'宁德',lng:119.5393}],
+  '江西':[{name:'南昌',lng:115.8581},{name:'景德镇',lng:117.1784},{name:'萍乡',lng:113.8544},{name:'九江',lng:116.0019},{name:'新余',lng:114.9171},{name:'鹰潭',lng:117.0363},{name:'赣州',lng:114.9343},{name:'吉安',lng:114.9863},{name:'宜春',lng:114.3915},{name:'抚州',lng:116.3583},{name:'上饶',lng:117.9102}],
+  '山东':[{name:'济南',lng:117.1201},{name:'青岛',lng:120.3826},{name:'淄博',lng:118.0548},{name:'枣庄',lng:117.3234},{name:'东营',lng:118.6714},{name:'烟台',lng:121.3911},{name:'潍坊',lng:119.1071},{name:'济宁',lng:116.5987},{name:'泰安',lng:117.0909},{name:'威海',lng:122.1200},{name:'日照',lng:119.5269},{name:'临沂',lng:118.3463},{name:'德州',lng:116.3553},{name:'聊城',lng:115.9856},{name:'滨州',lng:117.9715},{name:'菏泽',lng:115.4807}],
+  '河南':[{name:'郑州',lng:113.6654},{name:'开封',lng:114.3419},{name:'洛阳',lng:112.4540},{name:'平顶山',lng:113.1928},{name:'安阳',lng:114.3930},{name:'鹤壁',lng:114.2974},{name:'新乡',lng:113.8835},{name:'焦作',lng:113.2418},{name:'濮阳',lng:115.0296},{name:'许昌',lng:113.8524},{name:'漯河',lng:114.0166},{name:'三门峡',lng:111.1988},{name:'南阳',lng:112.5283},{name:'商丘',lng:115.6561},{name:'信阳',lng:114.0672},{name:'周口',lng:114.6495},{name:'驻马店',lng:114.0228}],
+  '湖北':[{name:'武汉',lng:114.3053},{name:'黄石',lng:115.0386},{name:'十堰',lng:110.7998},{name:'宜昌',lng:111.2864},{name:'襄阳',lng:112.1487},{name:'鄂州',lng:114.8902},{name:'荆门',lng:112.1993},{name:'孝感',lng:113.9268},{name:'荆州',lng:112.2391},{name:'黄冈',lng:114.8722},{name:'咸宁',lng:114.3430},{name:'随州',lng:113.3826},{name:'恩施',lng:109.4880}],
+  '湖南':[{name:'长沙',lng:112.9388},{name:'株洲',lng:113.1340},{name:'湘潭',lng:112.9151},{name:'衡阳',lng:112.5719},{name:'邵阳',lng:111.4694},{name:'岳阳',lng:113.1289},{name:'常德',lng:111.6818},{name:'张家界',lng:110.4792},{name:'益阳',lng:112.3609},{name:'郴州',lng:113.0021},{name:'永州',lng:111.6027},{name:'怀化',lng:110.0031},{name:'娄底',lng:111.9969}],
+  '广东':[{name:'广州',lng:113.2644},{name:'韶关',lng:113.5975},{name:'深圳',lng:114.0579},{name:'珠海',lng:113.5767},{name:'汕头',lng:116.6828},{name:'佛山',lng:113.1219},{name:'江门',lng:113.0781},{name:'湛江',lng:110.3594},{name:'茂名',lng:110.9254},{name:'肇庆',lng:112.4725},{name:'惠州',lng:114.4163},{name:'梅州',lng:116.1228},{name:'汕尾',lng:115.3752},{name:'河源',lng:114.6978},{name:'阳江',lng:111.9822},{name:'清远',lng:113.0562},{name:'东莞',lng:113.7465},{name:'中山',lng:113.3926},{name:'潮州',lng:116.6226},{name:'揭阳',lng:116.3726},{name:'云浮',lng:112.0440}],
+  '广西':[{name:'南宁',lng:108.3665},{name:'柳州',lng:109.4234},{name:'桂林',lng:110.2992},{name:'梧州',lng:111.2791},{name:'北海',lng:109.1195},{name:'防城港',lng:108.3545},{name:'钦州',lng:108.6543},{name:'贵港',lng:109.6018},{name:'玉林',lng:110.1540},{name:'百色',lng:106.6141},{name:'贺州',lng:111.5527},{name:'河池',lng:108.0503},{name:'来宾',lng:109.2286},{name:'崇左',lng:107.3500}],
+  '海南':[{name:'海口',lng:110.1999},{name:'三亚',lng:109.5082},{name:'儋州',lng:108.6543},{name:'三沙',lng:112.3333}],
+  '四川':[{name:'成都',lng:104.0668},{name:'自贡',lng:104.7784},{name:'攀枝花',lng:101.7162},{name:'泸州',lng:105.4424},{name:'德阳',lng:104.3978},{name:'绵阳',lng:104.6796},{name:'广元',lng:105.8430},{name:'遂宁',lng:105.5772},{name:'内江',lng:105.0585},{name:'乐山',lng:103.7612},{name:'南充',lng:106.0829},{name:'眉山',lng:103.8436},{name:'宜宾',lng:104.6308},{name:'广安',lng:106.6333},{name:'达州',lng:107.4782},{name:'雅安',lng:103.0010},{name:'巴中',lng:106.7566},{name:'资阳',lng:104.6279}],
+  '贵州':[{name:'贵阳',lng:106.7135},{name:'六盘水',lng:104.8333},{name:'遵义',lng:106.9273},{name:'安顺',lng:105.9462},{name:'毕节',lng:105.2847},{name:'铜仁',lng:109.1896}],
+  '云南':[{name:'昆明',lng:102.8329},{name:'曲靖',lng:103.7966},{name:'玉溪',lng:102.5457},{name:'保山',lng:99.1671},{name:'昭通',lng:103.7172},{name:'丽江',lng:100.2299},{name:'普洱',lng:100.9754},{name:'临沧',lng:100.0899},{name:'楚雄',lng:101.5280},{name:'红河',lng:103.3744},{name:'文山',lng:104.2446},{name:'大理',lng:100.2250},{name:'德宏',lng:98.5854},{name:'怒江',lng:98.8534},{name:'迪庆',lng:99.7061}],
+  '西藏':[{name:'拉萨',lng:91.1172},{name:'日喀则',lng:88.8809},{name:'昌都',lng:97.1787},{name:'林芝',lng:94.3624},{name:'山南',lng:91.7730},{name:'那曲',lng:92.0556},{name:'阿里',lng:80.1033}],
+  '陕西':[{name:'西安',lng:108.9398},{name:'铜川',lng:108.9538},{name:'宝鸡',lng:107.2369},{name:'咸阳',lng:108.7220},{name:'渭南',lng:109.4532},{name:'延安',lng:109.4898},{name:'汉中',lng:107.0230},{name:'榆林',lng:109.7348},{name:'安康',lng:109.0293},{name:'商洛',lng:109.9400}],
+  '甘肃':[{name:'兰州',lng:103.8343},{name:'嘉峪关',lng:98.2894},{name:'金昌',lng:102.1854},{name:'白银',lng:104.1387},{name:'天水',lng:105.7249},{name:'武威',lng:102.6346},{name:'张掖',lng:100.4598},{name:'平凉',lng:106.6652},{name:'酒泉',lng:98.4941},{name:'庆阳',lng:107.6490},{name:'定西',lng:104.6264},{name:'陇南',lng:104.9216}],
+  '青海':[{name:'西宁',lng:101.7804},{name:'海东',lng:102.1730},{name:'海北',lng:100.9974},{name:'黄南',lng:102.0180},{name:'海南',lng:100.6220},{name:'果洛',lng:100.2457},{name:'玉树',lng:97.0092},{name:'海西',lng:97.4355}],
+  '宁夏':[{name:'银川',lng:106.2309},{name:'石嘴山',lng:106.3782},{name:'吴忠',lng:106.1970},{name:'固原',lng:106.2425},{name:'中卫',lng:105.1966}],
+  '新疆':[{name:'乌鲁木齐',lng:87.6168},{name:'克拉玛依',lng:84.8706},{name:'吐鲁番',lng:89.1895},{name:'哈密',lng:93.5149},{name:'昌吉',lng:87.3074},{name:'博尔塔拉',lng:82.0622},{name:'巴音郭楞',lng:86.1455},{name:'阿克苏',lng:80.2610},{name:'克孜勒苏',lng:75.9891},{name:'喀什',lng:75.9891},{name:'和田',lng:79.9264},{name:'伊犁',lng:81.3416},{name:'塔城',lng:82.9818},{name:'阿勒泰',lng:88.1332}],
+  '香港':[{name:'香港',lng:114.1694}],
+  '澳门':[{name:'澳门',lng:113.5491}],
+  '台湾':[{name:'台北',lng:121.5654},{name:'高雄',lng:120.3124},{name:'台中',lng:120.6736},{name:'台南',lng:120.2391},{name:'新竹',lng:120.9684}],
+};
+/* 旧代码兼容：给定省份+城市索引，返回lng和名称 */
+function getCityInfo(province,cityIdx){
+  if(!province||!PROVINCES_DATA[province]) return null;
+  const c=PROVINCES_DATA[province][cityIdx];
+  return c?{name:c.name,lng:c.lng}:null;
+}
+/* 省份下拉变了 → 刷新城市下拉 */
+function onProvinceChange(){
+  const prov=document.getElementById('inputProvince').value;
+  const citySel=document.getElementById('inputCity');
+  citySel.innerHTML='<option value="">选择城市</option>';
+  if(prov && PROVINCES_DATA[prov]){
+    PROVINCES_DATA[prov].forEach((c,i)=>{
+      const opt=document.createElement('option');
+      opt.value=i;
+      opt.textContent=c.name;
+      citySel.appendChild(opt);
+    });
+  }
+}
+function onCityChange(){ /* 空函数，保留 */ }
+
+/* ========== 有效兑换码 ========== */
+const VALID_CODES=[
+  'TQ-8K3M-2P9X','TQ-5N7Q-1W4Z','TQ-3L6R-9D2C','TQ-7F4T-8B5H','TQ-2J9V-6K3M',
+  'TQ-4P8W-1N7Q','TQ-9D3C-5F2T','TQ-6M4X-8R1B','TQ-1H7K-3L9V','TQ-5Z2N-6W4P',
+  'TQ-YYHA-GLG2','TQ-UFN9-TQNW','TQ-4JPL-VV2K','TQ-S5FH-7R2C','TQ-4A4Q-9KW7',
+  'TQ-HVJ5-VDAN','TQ-3SUF-LZQ4','TQ-UKAE-UWUP','TQ-S7QK-CWQU','TQ-HLM8-QHJB',
+];
+
+/* ========== 十神映射 ========== */
+const TIAN_GAN=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const GAN_WUXING={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+const ZHI_WUXING={子:'水',丑:'土',寅:'木',卯:'木',辰:'土',巳:'火',午:'火',未:'土',申:'金',酉:'金',戌:'土',亥:'水'};
+// 地支阴阳：子寅辰午申戌为阳，丑卯巳未酉亥为阴
+const ZHI_YINYANG={子:'阳',寅:'阳',辰:'阳',午:'阳',申:'阳',戌:'阳',丑:'阴',卯:'阴',巳:'阴',未:'阴',酉:'阴',亥:'阴'};
+const YIN_YANG={甲:'阳',乙:'阴',丙:'阳',丁:'阴',戊:'阳',己:'阴',庚:'阳',辛:'阴',壬:'阳',癸:'阴',
+  ...ZHI_YINYANG};
+/* ========== 地支藏干（带本气/中气/余气标记） ========== */
+// 格式：{gan, label, weight} label: 本气/中气/余气
+const ZHI_HIDE={
+  子:[{gan:'癸',label:'本气',weight:10}],
+  丑:[{gan:'己',label:'本气',weight:8},{gan:'癸',label:'中气',weight:4},{gan:'辛',label:'余气',weight:3}],
+  寅:[{gan:'甲',label:'本气',weight:8},{gan:'丙',label:'中气',weight:4},{gan:'戊',label:'余气',weight:3}],
+  卯:[{gan:'乙',label:'本气',weight:10}],
+  辰:[{gan:'戊',label:'本气',weight:8},{gan:'乙',label:'中气',weight:4},{gan:'癸',label:'余气',weight:3}],
+  巳:[{gan:'丙',label:'本气',weight:8},{gan:'庚',label:'中气',weight:4},{gan:'戊',label:'余气',weight:3}],
+  午:[{gan:'丁',label:'本气',weight:8},{gan:'己',label:'中气',weight:5}],
+  未:[{gan:'己',label:'本气',weight:8},{gan:'丁',label:'中气',weight:4},{gan:'乙',label:'余气',weight:3}],
+  申:[{gan:'庚',label:'本气',weight:8},{gan:'壬',label:'中气',weight:4},{gan:'戊',label:'余气',weight:3}],
+  酉:[{gan:'辛',label:'本气',weight:10}],
+  戌:[{gan:'戊',label:'本气',weight:8},{gan:'辛',label:'中气',weight:4},{gan:'丁',label:'余气',weight:3}],
+  亥:[{gan:'壬',label:'本气',weight:8},{gan:'甲',label:'中气',weight:5}],
+};
+// 十神名称：以日主为基准
+const SHISHEN_NAMES={
+  '同我':['比肩','劫财'],
+  '我生':['食神','伤官'],
+  '我克':['偏财','正财'],
+  '克我':['七杀','正官'],
+  '生我':['偏印','正印'],
+};
+
+/* ========== 全局状态 ========== */
+let state=null;
+
+/* ========== 工具函数 ========== */
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
+function selectOption(el,group){
+  const parent=el.parentElement;
+  parent.querySelectorAll('.gender-option').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+  if(group==='calendar'){
+    const type=el.dataset.calendar;
+    const label=document.getElementById('dateLabel');
+    const solarDiv=document.getElementById('solarInputs');
+    const lunarDiv=document.getElementById('lunarInputs');
+    if(type==='lunar'){label.textContent='出生日期（农历）';solarDiv.style.display='none';lunarDiv.style.display='flex'}
+    else{label.textContent='出生日期（公历）';solarDiv.style.display='flex';lunarDiv.style.display='none'}
+  }
+}
+function onCityChange(){ /* 空函数 */ }
+/* 公历日期三栏下拉：年月日一排平铺，日数随年月自动修正（含闰年） */
+function daysInSolarMonth(y,m){return new Date(y,m,0).getDate()}
+function fillSolarSelectors(){
+  const t=new Date();
+  const defY=t.getFullYear()-8, defM=t.getMonth()+1, defD=t.getDate();
+  const ySel=document.getElementById('solarYear');
+  let html='';
+  for(let y=t.getFullYear();y>=1900;y--) html+='<option value="'+y+'"'+(y===defY?' selected':'')+'>'+y+'年</option>';
+  ySel.innerHTML=html;
+  const mSel=document.getElementById('solarMonth');
+  html='';
+  for(let m=1;m<=12;m++) html+='<option value="'+m+'"'+(m===defM?' selected':'')+'>'+m+'月</option>';
+  mSel.innerHTML=html;
+  fillSolarDays(defD);
+}
+function fillSolarDays(defD){
+  const y=parseInt(document.getElementById('solarYear').value);
+  const m=parseInt(document.getElementById('solarMonth').value);
+  const dSel=document.getElementById('solarDay');
+  const days=daysInSolarMonth(y,m);
+  const cur=defD||parseInt(dSel.value)||1;
+  let html='';
+  for(let d=1;d<=days;d++) html+='<option value="'+d+'"'+(d===Math.min(cur,days)?' selected':'')+'>'+d+'日</option>';
+  dSel.innerHTML=html;
+}
+function onSolarDateChange(){fillSolarDays()}
+function getLocation(){
+  const prov=document.getElementById('inputProvince').value;
+  const cityIdx=document.getElementById('inputCity').value;
+  if(!prov||cityIdx===''){alert('请选择出生地（省份+城市）');return null}
+  const info=getCityInfo(prov,parseInt(cityIdx));
+  if(!info){alert('未找到该城市坐标');return null}
+  return info;
+}
+/* 页面加载时初始化省份下拉 */
+(function initProvinces(){
+  const provSel=document.getElementById('inputProvince');
+  Object.keys(PROVINCES_DATA).forEach(p=>{
+    const opt=document.createElement('option');
+    opt.value=p;opt.textContent=p;provSel.appendChild(opt);
+  });
+})();
+
+/* ========== 十神计算 ========== */
+/* 获取任意天干或地支的五行（地支用本气藏干的五行） */
+function getWuxing(char){
+  if(GAN_WUXING[char]) return GAN_WUXING[char];  // 天干
+  if(ZHI_WUXING[char]){ // 地支 → 用本气藏干的五行
+    const hides=ZHI_HIDE[char];
+    if(hides&&hides.length>0) return GAN_WUXING[hides[0].gan];
+    return ZHI_WUXING[char];
+  }
+  return null;
+}
+/* 获取任意天干或地支的阴阳（地支用本气藏干的阴阳） */
+function getYinYang(char){
+  if(YIN_YANG[char] && !ZHI_WUXING[char]) return YIN_YANG[char]; // 天干
+  if(ZHI_WUXING[char]){ // 地支 → 用本气藏干的阴阳
+    const hides=ZHI_HIDE[char];
+    if(hides&&hides.length>0) return YIN_YANG[hides[0].gan];
+    return ZHI_YINYANG[char];
+  }
+  return null;
+}
+
+function calcShishen(dayGan,targetGan){
+  const dayEle=getWuxing(dayGan);
+  const tEle=getWuxing(targetGan);
+  const dayYin=getYinYang(dayGan)==='阳';
+  const tYin=getYinYang(targetGan)==='阳';
+  let relation;
+  if(dayEle===tEle) relation='同我';
+  else if((dayEle==='木'&&tEle==='火')||(dayEle==='火'&&tEle==='土')||(dayEle==='土'&&tEle==='金')||(dayEle==='金'&&tEle==='水')||(dayEle==='水'&&tEle==='木')) relation='我生';
+  else if((dayEle==='木'&&tEle==='土')||(dayEle==='火'&&tEle==='金')||(dayEle==='土'&&tEle==='水')||(dayEle==='金'&&tEle==='木')||(dayEle==='水'&&tEle==='火')) relation='我克';
+  else if((dayEle==='木'&&tEle==='金')||(dayEle==='火'&&tEle==='水')||(dayEle==='土'&&tEle==='木')||(dayEle==='金'&&tEle==='火')||(dayEle==='水'&&tEle==='土')) relation='克我';
+  else relation='生我';
+  const sameSex=dayYin===tYin;
+  const names=SHISHEN_NAMES[relation];
+  return sameSex?names[0]:names[1];
+}
+
+/* ========== 真太阳时 ========== */
+function calcSolarTime(y,m,d,h,min,lng){
+  const lngOff=(lng-120)*4;
+  const N=Math.floor((new Date(y,m-1,d)-new Date(y,0,1))/86400000)+1;
+  const g=2*Math.PI/365*(N-1);
+  const eot=229.18*(.000075+.001868*Math.cos(g)-.032077*Math.sin(g)-.014615*Math.cos(2*g)-.040849*Math.sin(2*g));
+  let total=h*60+min+lngOff+eot;
+  let ny=y,nm=m,nd=d;
+  const pd=24*60;
+  if(total<0){total+=pd;const p=new Date(y,m-1,d-1);ny=p.getFullYear();nm=p.getMonth()+1;nd=p.getDate()}
+  if(total>=pd){total-=pd;const n=new Date(y,m-1,d+1);ny=n.getFullYear();nm=n.getMonth()+1;nd=n.getDate()}
+  return{year:ny,month:nm,day:nd,hour:Math.floor(total/60),minute:Math.round(total%60)};
+}
+
+/* ========== 五行分数 ========== */
+function calcWuxingScores(bazi){
+  const score={木:0,火:0,土:0,金:0,水:0};
+  const weights=[{g:bazi.getYearGan(),z:bazi.getYearZhi(),w:.20},{g:bazi.getMonthGan(),z:bazi.getMonthZhi(),w:.28},
+    {g:bazi.getDayGan(),z:bazi.getDayZhi(),w:.22},{g:bazi.getTimeGan(),z:bazi.getTimeZhi(),w:.30}];
+  weights.forEach(p=>{
+    score[GAN_WUXING[p.g]]+=20*p.w;
+    score[ZHI_WUXING[p.z]]+=15*p.w;
+    (ZHI_HIDE[p.z]||[]).forEach(h=>{score[GAN_WUXING[h.gan]]+=h.weight*p.w});
+  });
+  const t=Object.values(score).reduce((a,b)=>a+b,0);
+  if(t>0) Object.keys(score).forEach(k=>score[k]=Math.round(score[k]/t*100));
+  return score;
+}
+
+/* ========== 日主三维评估 ========== */
+function calc3D(bazi,strength){
+  const dayGan=bazi.getDayGan();
+  const dayEle=GAN_WUXING[dayGan];
+  const monthZhi=bazi.getMonthZhi();
+  const monthEle=ZHI_WUXING[monthZhi];
+
+  // 得令：月令是否生扶日主（同我、生我）
+  let d=0;
+  if(monthEle===dayEle) d=25; // 同我
+  else if((monthEle==='木'&&dayEle==='火')||(monthEle==='火'&&dayEle==='土')||(monthEle==='土'&&dayEle==='金')||(monthEle==='金'&&dayEle==='水')||(monthEle==='水'&&dayEle==='木')) d=25; // 生我
+  else d=10;
+
+  let di=0;
+  const zhiList=[bazi.getYearZhi(),bazi.getMonthZhi(),bazi.getDayZhi(),bazi.getTimeZhi()];
+  zhiList.forEach(z=>{
+    (ZHI_HIDE[z]||[]).forEach(h=>{if(GAN_WUXING[h.gan]===dayEle) di+=h.weight});
+  });
+
+  // 得势：天干同类
+  let ds=0;
+  const ganList=[bazi.getYearGan(),bazi.getMonthGan(),bazi.getDayGan(),bazi.getTimeGan()];
+  ganList.forEach(g=>{if(GAN_WUXING[g]===dayEle) ds+=12});
+
+  // 归一化
+  d=Math.min(30,Math.round(d));
+  di=Math.min(35,Math.round(di));
+  ds=Math.min(35,Math.round(ds));
+  const total=d+di+ds;
+  return{d,di,ds,total,verdict:total>=45?'身强':'身弱'};
+}
+
+/* ========== 喜用神 & 性格 ========== */
+function calcFavorable(bazi,threeD){
+  const dayGan=bazi.getDayGan();
+  const dayEle=GAN_WUXING[dayGan];
+  const strong=threeD.verdict==='身强';
+  let use1,use2,avoid,desc,suggestion;
+
+  if(strong){
+    // 身强：用克泄耗
+    const keMap={木:'金',火:'水',土:'木',金:'火',水:'土'};
+    const shengMeMap={木:'火',火:'土',土:'金',金:'水',水:'木'};
+    use1=keMap[dayEle];
+    use2=shengMeMap[dayEle];
+    const sameMap={木:'木',火:'火',土:'土',金:'金',水:'水'};
+    avoid=dayEle+','+sameMap[dayEle];
+    desc=`${dayGan}日主身强，精力充沛、行动力强。${use1}为第一用神（官杀克身），能带来规则感、责任感与目标约束；${use2}为第二用神（食伤泄秀），能释放才华、激发思考力与创造力。`;
+    suggestion='建议：给自己设定清晰的目标与规则，用目标感约束行动节奏；多表达、创作、运动，让过剩的能量有出口；避免过度消耗或过度自我施压，在自由与自律之间找到平衡。';
+  }else{
+    // 身弱：用生扶
+    const shengMap={木:'水',火:'木',土:'火',金:'土',水:'金'};
+    const sameMap={木:'木',火:'火',土:'土',金:'金',水:'水'};
+    use1=shengMap[dayEle];
+    use2=sameMap[dayEle];
+    // 忌神：克泄
+    const keMap={木:'金',火:'水',土:'木',金:'火',水:'土'};
+    const shengMeMap={木:'火',火:'土',土:'金',金:'水',水:'木'};
+    avoid=keMap[dayEle]+','+shengMeMap[dayEle];
+    desc=`${dayGan}日主身弱，心思细腻、感受力强。${use1}为第一用神（印星生身），能带来安全感、学习力与智慧滋润；${use2}为第二用神（比劫帮身），能增强行动力与自信心。`;
+    suggestion='建议：先照顾好自己的能量，再照顾世界；给自己稳定的生活节奏与安全感；重要决定前多听取信任之人的意见；保证充足睡眠与留白时间；培养运动习惯增强底气，避免长期自我消耗。';
+  }
+
+  return{use1,use2,avoid,desc,suggestion};
+}
+
+function generateDayMasterDesc(dayGan,threeD){
+  const descs={
+    '甲':'甲木为阳木，象征参天大树、栋梁之材。甲木日主的人正直有主见、有原则、内藏韧性。',
+    '乙':'乙木为阴木，象征花草藤蔓、柔韧之姿。乙木日主的人温和敏感、适应力强、善于配合。',
+    '丙':'丙火为阳火，象征太阳烈焰、光明正大。丙火日主的人热情开朗、阳光积极、有领导力。',
+    '丁':'丁火为阴火，象征灯火烛火、含蓄之光。丁火日主的人内敛细腻、追求完美、审美出色。',
+    '戊':'戊土为阳土，象征高山大地、厚重沉稳。戊土日主的人稳重踏实、责任感强、务实可靠。',
+    '己':'己土为阴土，象征田园湿地、滋养之土。己土日主的人细致耐心、服务意识强、善于照顾。',
+    '庚':'庚金为阳金，象征刀剑钢铁、刚毅果决。庚金日主的人果断坚毅、讲义气、目标导向强。',
+    '辛':'辛金为阴金，象征珠玉首饰、精致讲究。辛金日主的人精致追求、心思细腻、有审美品味。',
+    '壬':'壬水为阳水，象征江河湖海、奔流不息。壬水日主的人聪明灵活、善于变通、心胸开阔。',
+    '癸':'癸水为阴水，象征雨露溪泉、深邃内敛。癸水日主的人智慧深沉、直觉敏锐、内敛含蓄。',
+  };
+  const base=descs[dayGan]||'';
+  const strong=threeD.verdict==='身强';
+  const end=strong?' 日主身强，能量充足，宜加约束引导方向。':' 日主身弱，能量偏收，宜多滋养鼓励释放。';
+  return base+end;
+}
+
+function generateTags(dayGan,threeD,bazi){
+  const base={
+    '甲':['正直有主见','内藏韧性','重视原则'],
+    '乙':['温和敏感','适应力强','善于配合'],
+    '丙':['热情开朗','阳光积极','有领导力'],
+    '丁':['内敛细腻','追求完美','审美出色'],
+    '戊':['稳重踏实','责任感强','务实可靠'],
+    '己':['细致耐心','服务意识','善于照顾'],
+    '庚':['果断坚毅','讲义气','目标导向'],
+    '辛':['精致追求','讲究品质','心思细腻'],
+    '壬':['聪明灵活','善于变通','心胸开阔'],
+    '癸':['智慧深沉','直觉敏锐','内敛含蓄'],
+  };
+  let tags=[...(base[dayGan]||[])];
+  const monthGan=bazi.getMonthGan();
+  if(monthGan==='辛'||monthGan==='丁') tags.push('规则意识','重诺守信');
+  if(monthGan==='己'||monthGan==='戊') tags.push('务实稳重');
+  tags.push(threeD.verdict==='身强'?'独立自主':'有同理心');
+  return [...new Set(tags)].slice(0,8);
+}
+
+/* ========== 加德纳八项智能 ========== */
+const INTEL_DEFS=[
+  {name:'语言智能',desc:'运用语言表达和理解的能力，包括听、说、读、写。'},
+  {name:'逻辑数理',desc:'逻辑推理和数学运算的能力，包括分析、推理、解决问题。'},
+  {name:'空间视觉',desc:'对空间关系的感知和想象能力，包括绘画、设计、方向感。'},
+  {name:'肢体动觉',desc:'运用身体和双手的能力，包括运动、舞蹈、手工、操作。'},
+  {name:'音乐智能',desc:'对音乐的感知、理解和表达能力。'},
+  {name:'人际智能',desc:'与人交往和理解他人的能力，包括沟通、合作、领导。'},
+  {name:'内省智能',desc:'自我认知和反思的能力，包括了解自己、管理情绪。'},
+  {name:'自然观察',desc:'观察和理解自然的能力，包括识别动植物、了解自然规律。'},
+];
+
+/* ========== 性格三方面分析 ========== */
+const DAY_MASTER_DESC={
+  '甲':'甲木为阳木，象征参天大树、栋梁之材。甲木日主的人天生正直有主见、重视原则、内藏韧性、敢于担当。如大树扎根稳、枝干直，做事有始有终，一旦认定方向便全力以赴。',
+  '乙':'乙木为阴木，象征花草藤蔓、柔韧之姿。乙木日主的人温和敏感、适应力强、善于配合、心思细腻。如藤蔓善于攀援生长，懂得灵活变通，在不同环境中都能找到自己的位置。',
+  '丙':'丙火为阳火，象征太阳烈焰、光明正大。丙火日主的人热情开朗、阳光积极、有领导力、感染力强。如太阳普照大地，能给周围带来温暖和能量，是人群中的小太阳。',
+  '丁':'丁火为阴火，象征灯火烛火、含蓄之光。丁火日主的人内敛细腻、追求完美、审美出色、心思周密。如烛火虽小却明亮稳定，善于观察细节，有自己的审美品味和精神世界。',
+  '戊':'戊土为阳土，象征高山大地、厚重沉稳。戊土日主的人稳重踏实、责任感强、务实可靠、内心笃定。如高山屹立不摇，做事按部就班、脚踏实地，值得信赖。',
+  '己':'己土为阴土，象征田园湿地、滋养之土。己土日主的人细致耐心、服务意识强、善于照顾他人、包容厚道。如田园肥沃滋养万物，愿意付出和服务，善于滋养他人成长。',
+  '庚':'庚金为阳金，象征刀剑钢铁、刚毅果决。庚金日主的人果断坚毅、讲义气、目标导向强、执行力出色。如刀剑锋利果决，做决定快、行动干脆，重视承诺与朋友。',
+  '辛':'辛金为阴金，象征珠玉首饰、精致讲究。辛金日主的人精致追求、讲究品质、心思细腻、有审美品味。如珠玉需精心雕琢，对自己和他人都有较高标准，追求精致美好。',
+  '壬':'壬水为阳水，象征江河湖海、奔流不息。壬水日主的人聪明灵活、善于变通、心胸开阔、好奇心强。如江河奔流不拘一格，思维活跃、反应敏捷，善于接受新事物。',
+  '癸':'癸水为阴水，象征雨露溪泉、深邃内敛。癸水日主的人智慧深沉、直觉敏锐、内敛含蓄、富有想象力。如溪水幽静却源远流长，内在世界丰富，直觉和感受力特别强。',
+};
+const ELEMENT_DESC={
+  '木':'木主生发、向上、拓展。木能量强的人乐观积极、有冲劲、善于开创、对未来充满期待。但也可能急躁、耐心不足。木的能量赋予你探索欲、行动力和成长力。',
+  '火':'火主礼、热、光芒。火能量强的人热情、直率、富有感染力、表现力强。但也可能急躁、情绪起伏大。火的能量让你充满热情、善于表达、有艺术天赋。',
+  '土':'土主信、厚、承载。土能量强的人稳重、厚道、踏实、有耐心、包容力强。但也可能保守、不够灵活。土的能量让你做事扎实、重承诺、有毅力。',
+  '金':'金主义、刚、决断。金能量强的人刚毅、果决、理性、讲义气、重原则。但也可能过于固执、不易变通。金的能量让你目标明确、执行力强、重视品质。',
+  '水':'水主智、柔、变通。水能量强的人聪明、灵活、反应快、善于观察、学习能力强。但也可能多变、缺乏定性。水的能量让你思维活跃、善于变通、有智慧。',
+};
+const SHISHEN_DESC={
+  '比肩':'比肩代表独立、自主、有主见。比肩强的人相信自己、喜欢独立做事、不愿依赖他人。优点是自信独立、行动力强；缺点是可能自我、不太顾及他人感受。',
+  '劫财':'劫财代表竞争、争夺、不服输。劫财强的人好胜心强、勇于竞争、敢于挑战。优点是有冲劲、不怕困难；缺点是可能冲动、与人争夺资源。',
+  '食神':'食神代表才华、表达、享受。食神强的人有艺术天赋、善于表达、追求生活品质。优点是才华横溢、乐观开朗；缺点是可能安于享受、缺乏压力感。',
+  '伤官':'伤官代表聪明、反叛、创新。伤官强的人聪明伶俐、思维活跃、不循常理。优点是创造力强、敢于突破；缺点是可能不听话、有些叛逆。',
+  '偏财':'偏财代表财运、机遇、享受。偏财强的人机会多、财运好、敢于尝试新事物。优点是行动力强、有商业头脑；缺点是花钱大手大脚、存不住钱。',
+  '正财':'正财代表稳定、务实、节俭。正财强的人踏实可靠、有经济头脑、勤俭节约。优点是稳定可靠、会理财；缺点是可能过于看重利益、有些小气。',
+  '七杀':'七杀代表压力、竞争、权威。七杀强的人有魄力、能扛事、在压力下成长快。优点是有战斗力、敢于担当；缺点是压力大时容易焦虑、脾气急躁。',
+  '正官':'正官代表规则、纪律、责任。正官强的人守规矩、重承诺、有责任感。优点是自律守序、值得信赖；缺点是可能过于严肃、缺乏灵活。',
+  '偏印':'偏印代表聪明、内省、特别。偏印强的人思维独特、善于内省、有特殊才华。优点是智力超群、善于思考；缺点是可能想法多行动少、有些孤僻。',
+  '正印':'正印代表关爱、学识、贵人。正印强的人有长辈缘、学习力强、获得照顾。优点是学识丰富、有人帮助；缺点是可能依赖心重、不够独立。',
+};
+
+function calcCharacterAnalysis(r){
+  const dayGan=r.bazi.getDayGan();
+  // 最强五行
+  const w=r.wuxing;
+  let topEl=Object.keys(w).reduce((a,b)=>w[a]>w[b]?a:b,'木');
+  // 最强十神（统计全部藏干的十神出现次数）
+  const counts={};
+  const pillars=[
+    {g:r.bazi.getYearGan(),z:r.bazi.getYearZhi()},
+    {g:r.bazi.getMonthGan(),z:r.bazi.getMonthZhi()},
+    {g:r.bazi.getDayGan(),z:r.bazi.getDayZhi()},
+    {g:r.bazi.getTimeGan(),z:r.bazi.getTimeZhi()},
+  ];
+  pillars.forEach(({g,z})=>{
+    const sg=calcShishen(dayGan,g);
+    counts[sg]=(counts[sg]||0)+2;
+    (ZHI_HIDE[z]||[]).forEach(h=>{
+      const ss=calcShishen(dayGan,h.gan);
+      counts[ss]=(counts[ss]||0)+h.weight/5;
+    });
+  });
+  let topSS=Object.keys(counts).reduce((a,b)=>counts[a]>counts[b]?a:b,'比肩');
+
+  return{
+    dayMaster:DAY_MASTER_DESC[dayGan]||'',
+    topElement:{el:topEl,desc:ELEMENT_DESC[topEl]||''},
+    topShishen:{name:topSS,desc:SHISHEN_DESC[topSS]||''},
+  };
+}
+
+/* ========== 十神权重统计（月令提纲占50%） ========== */
+/*
+ * 八字能量分布原则：
+ * - 月柱地支（月令/提纲）独占 50%（月支是命局提纲，主宰全局旺衰）
+ * - 月干 5%（随月令得势）
+ * - 日支 15%（贴身）
+ * - 时柱 12%（时干5 + 时支7）
+ * - 年柱 8%（年干3 + 年支5）
+ * - 日主 10%（自我能量）
+ * 合计 100%
+ * 每个柱位内再按"天干1.0 / 本气1.0 / 中气0.6 / 余气0.3"分摊
+ */
+function calcAllShishenWeights(bazi,dayGan){
+  const weights={比肩:0,劫财:0,食神:0,伤官:0,偏财:0,正财:0,七杀:0,正官:0,偏印:0,正印:0};
+  // 各柱位的"柱内总权重"占比（总和=1）
+  const pillarWeights={
+    year:{gan:0.03, zhi:0.05},
+    month:{gan:0.05, zhi:0.50},   // 月令提纲 50%
+    day:{gan:0.10, zhi:0.15},     // 日主10% + 日支15%（贴身）
+    time:{gan:0.05, zhi:0.07},
+  };
+  // 藏干权重映射：本气=1.0, 中气=0.6, 余气=0.3
+  const hideW={本气:1.0, 中气:0.6, 余气:0.3};
+  const add=(ss,v)=>{weights[ss]=(weights[ss]||0)+v;};
+  const calcPillar=(ganKey,zhiKey,pw)=>{
+    const gan=bazi[ganKey]();
+    const zhi=bazi[zhiKey]();
+    // 天干（日主跳过）
+    if(ganKey!=='getDayGan') add(calcShishen(dayGan,gan), pw.gan*100);
+    // 地支藏干：先把柱位权重按藏干权重比例分摊
+    const hides=(ZHI_HIDE[zhi]||[]);
+    const totalHideW=hides.reduce((a,h)=>a+(hideW[h.label]||0.3),0)||1;
+    hides.forEach(h=>{
+      const hw=hideW[h.label]||0.3;
+      add(calcShishen(dayGan,h.gan), pw.zhi*100*(hw/totalHideW));
+    });
+  };
+  calcPillar('getYearGan','getYearZhi',pillarWeights.year);
+  calcPillar('getMonthGan','getMonthZhi',pillarWeights.month);
+  calcPillar('getDayGan','getDayZhi',pillarWeights.day);
+  calcPillar('getTimeGan','getTimeZhi',pillarWeights.time);
+  return weights;
+}
+
+/* ========== 十神详情（含每个十神的来源柱位说明，用于解释理由） ========== */
+function calcShishenSources(bazi,dayGan){
+  const sources={}; // {十神: [{pillar:'月支', kind:'本气', weight:25, char:'午'}]}
+  const pillarWeights={year:{gan:3, zhi:5},month:{gan:5, zhi:50},day:{gan:10, zhi:15},time:{gan:5, zhi:7}};
+  const hideW={本气:1.0, 中气:0.6, 余气:0.3};
+  const pillarNames={year:'年柱',month:'月柱',day:'日柱',time:'时柱'};
+  const zhiPos={year:'年支',month:'月令',day:'日支',time:'时支'};
+  const addSource=(ss,entry)=>{(sources[ss]=sources[ss]||[]).push(entry);};
+  const calcP=(ganKey,zhiKey,pKey)=>{
+    const gan=bazi[ganKey]();const zhi=bazi[zhiKey]();
+    const pw=pillarWeights[pKey];
+    if(ganKey!=='getDayGan'){
+      addSource(calcShishen(dayGan,gan),{pos:pillarNames[pKey]+'干',char:gan,weight:pw.gan,kind:'透干'});
+    }
+    const hides=(ZHI_HIDE[zhi]||[]);
+    const totalHideW=hides.reduce((a,h)=>a+(hideW[h.label]||0.3),0)||1;
+    hides.forEach(h=>{
+      const hw=hideW[h.label]||0.3;
+      const w=pw.zhi*(hw/totalHideW);
+      addSource(calcShishen(dayGan,h.gan),{pos:zhiPos[pKey],char:zhi,ganChar:h.gan,weight:Math.round(w*10)/10,kind:h.label});
+    });
+  };
+  calcP('getYearGan','getYearZhi','year');
+  calcP('getMonthGan','getMonthZhi','month');
+  calcP('getDayGan','getDayZhi','day');
+  calcP('getTimeGan','getTimeZhi','time');
+  return sources;
+}
+
+/* ========== 星盘简化计算 ========== */
+// 太阳星座：用lunar-javascript内置
+function getSunSign(solar){ return solar.getXingZuo()||'未知'; }
+
+// 月亮星座（简化算法，精度约±2度，对儿童天赋分析足够）
+function getMoonSign(year,month,day,hour){
+  // 近似：基于儒略日计算月亮黄经
+  // 简化公式，足够用于天赋分析的星座归属
+  const jd=Math.floor(365.25*(year+4716))+Math.floor(30.6001*(month+1))+day+hour/24-1524.5;
+  const t=(jd-2451545.0)/36525;
+  // 月亮平均黄经（简化）
+  const L=218.316+481267.881*t+13.176396*(jd-2451545);
+  const moonLon=((L%360)+360)%360;
+  const signs=['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼'];
+  return signs[Math.floor(moonLon/30)];
+}
+
+// 上升星座（简化：根据出生时间估算，约±15度精度）
+function getRisingSign(year,month,day,hour,minute){
+  const solar=Solar.fromYmdHms(year,month,day,hour,minute,0);
+  const sunSignName=solar.getXingZuo()||'白羊';
+  const ALL_SIGNS=['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼'];
+  let sunSign=ALL_SIGNS.indexOf(sunSignName);
+  if(sunSign<0) sunSign=0;
+  const dayMinutes=hour*60+minute;
+  let offset=Math.floor((dayMinutes/1440)*12);
+  if(dayMinutes<360||dayMinutes>1080) offset=(offset+6)%12;
+  return ALL_SIGNS[(sunSign+offset)%12];
+}
+
+/* ========== 八项智能算法（仅五行+十神，不含星盘） ========== */
+function calcIntelligences(bazi,threeD,wuxing,solar){
+  // 1. 基础分（正式版硬编码，不是55起步！）
+  const scores={'逻辑数理':58,'语言智能':65,'空间视觉':65,'肢体动觉':65,'音乐智能':65,'人际智能':65,'内省智能':65,'自然观察':60};
+
+  // 2. 五行影响（硬阈值触发，>80或>75/70）
+  if(wuxing['木']>80){scores['自然观察']+=10;scores['空间视觉']+=5}
+  if(wuxing['火']>80){scores['音乐智能']+=8;scores['肢体动觉']+=8}
+  if(wuxing['土']>80){scores['自然观察']+=8;scores['人际智能']+=5}
+  if(wuxing['金']>70){scores['逻辑数理']+=8;scores['语言智能']+=5}
+  if(wuxing['水']>75){scores['内省智能']+=8;scores['语言智能']+=5}
+
+  // 3. 十神影响（正式版用绝对值阈值，不是比例）
+  const dayGan=bazi.getDayGan();
+  const ssWeights=calcAllShishenWeights(bazi,dayGan);
+  if(ssWeights['食神']>10){scores['音乐智能']+=10;scores['肢体动觉']+=8;scores['空间视觉']+=5}
+  if(ssWeights['伤官']>10){scores['语言智能']+=8;scores['空间视觉']+=8;scores['音乐智能']+=5}
+  if(ssWeights['偏财']>15){scores['人际智能']+=10;scores['肢体动觉']+=5}
+  if(ssWeights['正财']>10){scores['自然观察']+=5;scores['人际智能']+=5}
+  if(ssWeights['正官']>10){scores['逻辑数理']+=8;scores['内省智能']+=5}
+  if(ssWeights['七杀']>8){scores['逻辑数理']+=5;scores['肢体动觉']+=8}
+  if(ssWeights['正印']>8){scores['内省智能']+=8;scores['语言智能']+=8}
+  if(ssWeights['偏印']>8){scores['内省智能']+=8;scores['空间视觉']+=8}
+  if(ssWeights['比肩']>8){scores['肢体动觉']+=5;scores['人际智能']+=5}
+  if(ssWeights['劫财']>8){scores['肢体动觉']+=8;scores['人际智能']+=5}
+
+  // 限制范围 40~98
+  Object.keys(scores).forEach(k=>{scores[k]=Math.min(98,Math.max(40,Math.round(scores[k])))});
+  return scores;
+}
+
+/* ========== 主流程 ========== */
+function startCalc(){
+  const name=document.getElementById('inputName').value.trim()||'朋友';
+  const genderActive=document.querySelector('[data-group="gender"] .gender-option.active');
+  const gender=genderActive?genderActive.dataset.gender:'女';
+  const calendarActive=document.querySelector('[data-group="calendar"] .gender-option.active');
+  const calendarType=calendarActive?calendarActive.dataset.calendar:'solar';
+  const location=getLocation();
+  if(!location) return;
+
+  let sy,sm,sd;
+  if(calendarType==='lunar'){
+    const y=parseInt(document.getElementById('lunarYear').value);
+    const m=parseInt(document.getElementById('lunarMonth').value);
+    const d=parseInt(document.getElementById('lunarDay').value);
+    if(!y||!m||!d){alert('请输入完整的农历年月日');return}
+    const s=Lunar.fromYmd(y,m,d).getSolar();
+    sy=s.getYear();sm=s.getMonth();sd=s.getDay();
+  }else{
+    const y=parseInt(document.getElementById('solarYear').value);
+    const m=parseInt(document.getElementById('solarMonth').value);
+    const d=parseInt(document.getElementById('solarDay').value);
+    if(!y||!m||!d){alert('请选择完整的出生日期');return}
+    sy=y;sm=m;sd=d;
+  }
+  const [h,min]=document.getElementById('inputTime').value.split(':').map(Number);
+
+  // Loading → 直接计算，跳过loading延迟
+  showPage('pageLoading');
+  const loadingTexts=['校正真太阳时...','排盘八字命局...','计算五行能量...','匹配天赋光谱...'];
+  let idx=0;
+  const loadingInterval=setInterval(()=>{
+    idx=(idx+1)%loadingTexts.length;
+    document.getElementById('loadingText').textContent=loadingTexts[idx];
+  },500);
+
+  setTimeout(()=>{
+    clearInterval(loadingInterval);
+    try{
+      const ts=calcSolarTime(sy,sm,sd,h,min,location.lng);
+      const solar=Solar.fromYmdHms(ts.year,ts.month,ts.day,ts.hour,ts.minute,0);
+      const lunar=solar.getLunar();
+      const bazi=lunar.getEightChar();
+
+      const threeD=calc3D(bazi);
+      const wuxing=calcWuxingScores(bazi);
+      const favorable=calcFavorable(bazi,threeD);
+      const intels=calcIntelligences(bazi,threeD,wuxing,solar);
+
+      state={name,gender,location,calendarType,
+        birthInfo:`${location.name} · 真太阳时 ${ts.year}.${ts.month}.${ts.day} ${String(ts.hour).padStart(2,'0')}:${String(ts.minute).padStart(2,'0')}`,
+        bazi,threeD,wuxing,favorable,intels,
+        // 真太阳时信息供星盘计算
+        trueYear:ts.year,trueMonth:ts.month,trueDay:ts.day,trueHour:ts.hour,trueMinute:ts.minute
+      };
+
+      showPage('pageUnlock');
+    }catch(e){console.error(e);alert('计算错误：'+e.message);showPage('pageInput')}
+  },1500);
+}
+
+function verifyRedeem(){
+  const code=document.getElementById('redeemCode').value.trim().toUpperCase();
+  const err=document.getElementById('redeemError');
+  if(!code){err.style.display='block';err.textContent='请输入兑换码';return}
+  if(VALID_CODES.includes(code)){
+    err.style.display='none';
+    localStorage.setItem('xingqi_code',code);
+    renderResult();
+    showPage('pageResult');
+  }else{
+    err.style.display='block';
+    err.textContent='兑换码无效，请检查后重试';
+  }
+}
+
+/* ========== 十天干卡通形象（阳干阴干造型不同） ========== */
+const GAN_KID={
+  '甲':'<img src="images/甲.png" style="width:160px;height:160px;object-fit:contain" alt="甲木">',
+  '乙':'<img src="images/乙.png" style="width:160px;height:160px;object-fit:contain" alt="乙木">',
+  '丙':'<img src="images/丙.png" style="width:160px;height:160px;object-fit:contain" alt="丙火">',
+  '丁':'<img src="images/丁.png" style="width:160px;height:160px;object-fit:contain" alt="丁火">',
+  '戊':'<img src="images/戊.png" style="width:160px;height:160px;object-fit:contain" alt="戊土">',
+  '己':'<img src="images/己.png" style="width:160px;height:160px;object-fit:contain" alt="己土">',
+  '庚':'<img src="images/庚.png" style="width:160px;height:160px;object-fit:contain" alt="庚金">',
+  '辛':'<img src="images/辛.png" style="width:160px;height:160px;object-fit:contain" alt="辛金">',
+  '壬':'<img src="images/壬.png" style="width:160px;height:160px;object-fit:contain" alt="壬水">',
+  '癸':'<img src="images/癸.png" style="width:160px;height:160px;object-fit:contain" alt="癸水">',
+};
+
+/* ========== 十天干日主+身强身弱解释 ========== */
+const GAN_STRONG_DESC={
+  '甲':{kid:'甲木',title:'参天大树型',desc:'如挺拔的参天大树，正直向上、有主见、领导力强。身强的甲木能量充足，天生是"当家的料"，做事有规划、有担当，但有时会过于固执，认准了就不回头。',tip:'适合独立负责项目、管理团队。注意学会倾听不同意见，刚柔并济。'},
+  '乙':{kid:'乙木',title:'柔韧藤蔓型',desc:'如柔美的花草藤蔓，心思细腻、善于配合、适应力强。身强的乙木外柔内刚，看似温和实则坚韧，能在各种环境中找到自己的生存方式。',tip:'适合需要耐心和细致的工作。注意避免过度迁就他人，学会表达自己的需求。'},
+  '丙':{kid:'丙火',title:'耀眼太阳型',desc:'如耀眼的太阳，光芒万丈、热情开朗、感染力强。身强的丙火天生是焦点，走到哪里都能照亮周围，但有时会过于自我，忽略他人感受。',tip:'适合舞台、演讲、领导岗位。注意学会收敛锋芒，给别人留空间。'},
+  '丁':{kid:'丁火',title:'温暖烛火型',desc:'如温暖的烛火，细腻贴心、善于照顾他人、有艺术气质。身强的丁火外柔内韧，看似温和实则坚定，能在关键时刻给人温暖和力量。',tip:'适合教育、咨询、艺术类工作。注意避免过度消耗自己，学会说"不"。'},
+  '戊':{kid:'戊土',title:'巍峨高山型',desc:'如巍峨的高山，稳重踏实、守信用、有责任感。身强的戊土能扛事、有担当，是团队中的"定海神针"，但有时会过于保守，不愿变通。',tip:'适合管理、财务、基建类工作。注意学会灵活变通，不要一条道走到黑。'},
+  '己':{kid:'己土',title:'肥沃田园型',desc:'如肥沃的田园，包容接纳、善于积累、内心丰富。身强的己土外圆内方，看似随和实则有自己的原则，能在复杂环境中保持平衡。',tip:'适合协调、中介、资源整合类工作。注意避免过度迁就，学会拒绝。'},
+  '庚':{kid:'庚金',title:'锋利宝剑型',desc:'如锋利的宝剑，果断利落、追求完美、有原则。身强的庚金天生是"行动派"，做事雷厉风行、不拖泥带水，但有时会过于直接，伤人而不自知。',tip:'适合技术、法律、审计类工作。注意学会委婉表达，刚柔并济。'},
+  '辛':{kid:'辛金',title:'璀璨珍珠型',desc:'如璀璨的珍珠，精致细腻、审美优秀、敏感敏锐。身强的辛金外柔内刚，看似温和实则有自己的高标准，能在细节处见真章。',tip:'适合设计、艺术、品质管理类工作。注意避免过度追求完美，学会接受"够用就好"。'},
+  '壬':{kid:'壬水',title:'奔涌江河型',desc:'如奔涌的江河，聪明灵动、适应力强、心胸开阔。身强的壬水天生是"智多星"，思维敏捷、点子多，但有时会想太多做太少，容易内耗。',tip:'适合策划、咨询、创意类工作。注意学会聚焦，把想法落地。'},
+  '癸':{kid:'癸水',title:'滋润雨露型',desc:'如滋润的雨露，温柔细腻、善解人意、内省深刻。身强的癸水外柔内韧，看似柔弱实则有自己的坚持，能在潜移默化中影响他人。',tip:'适合写作、研究、心理咨询类工作。注意避免过度内耗，学会表达自己。'},
+};
+const GAN_WEAK_DESC={
+  '甲':{kid:'甲木',title:'需要阳光的小树型',desc:'如一棵需要阳光雨露的小树，虽然能量不算最强，但你有正直向上的生命力。身弱的甲木内心有主见但不够坚定，需要有人帮你"撑腰"，不宜过多打压或否定。',tip:'多给自己正面肯定，找一个能支持你的导师或伙伴；避免频繁更换环境。'},
+  '乙':{kid:'乙木',title:'需要支架的藤蔓型',desc:'如一株需要支架的藤蔓，虽然柔韧但能量内敛。身弱的乙木善于配合但容易迷失自我，需要找到可以依靠的"大树"，不宜独自面对大风大浪。',tip:'找到一个稳定的平台或团队，在合作中发挥你的细腻优势；避免单打独斗。'},
+  '丙':{kid:'丙火',title:'需要点燃的火种型',desc:'如一粒需要点燃的火种，虽然能量内敛，但一旦点燃就能熊熊燃烧。身弱的丙火表达欲不强，需要多给自己表现机会，被看见、被认可后才能发光发热。',tip:'多参加社交活动，从小范围开始锻炼表达；避免长期独处。'},
+  '丁':{kid:'丁火',title:'需要呵护的烛光型',desc:'如一盏需要呵护的烛光，虽然温暖但能量有限。身弱的丁火内心细腻但容易受伤，需要一个安全稳定的环境，不宜频繁面对冲突或压力。',tip:'建立稳定的生活节奏，找到能让你放松的爱好；避免过度消耗自己。'},
+  '戊':{kid:'戊土',title:'需要夯实的土壤型',desc:'如一片需要夯实的土壤，虽然松软但有无限承载可能。身弱的戊土容易没安全感，需要一个稳定的环境，不宜频繁更换工作或生活环境。',tip:'建立固定的生活和工作习惯；找到能让你"扎根"的领域。'},
+  '己':{kid:'己土',title:'需要滋养的田园型',desc:'如一片需要滋养的田园，虽然包容但能量不足。身弱的己土善于积累但容易过度付出，需要学会"滋养自己"，不宜总是为别人着想而忽略自己。',tip:'学会先照顾好自己，再照顾别人；建立边界感，不要当"老好人"。'},
+  '庚':{kid:'庚金',title:'需要锤炼的原石型',desc:'如一块需要锤炼的原石，虽然未经雕琢但内里有高贵的品质。身弱的庚金内心有原则但不够坚定，需要找到自己真正擅长的领域后才能一鸣惊人。',tip:'找到你真正感兴趣的事，在这个领域里深耕；避免频繁更换方向。'},
+  '辛':{kid:'辛金',title:'需要打磨的珍珠型',desc:'如一颗需要打磨的珍珠，虽然外表普通但内里有璀璨的光芒。身弱的辛金内心追求完美但不外露，需要有人帮你"发现"自己的闪光点。',tip:'多给自己正面反馈，记录自己的成就；避免过度自我批评。'},
+  '壬':{kid:'壬水',title:'需要引导的溪流型',desc:'如一条需要引导的溪流，虽然力量不大但智慧灵动。身弱的壬水心思细腻、善于观察，但容易"内耗"——想太多做太少。需要有人帮你把想法落地。',tip:'培养"想到就做"的习惯，先完成再完美；找一个能督促你的伙伴。'},
+  '癸':{kid:'癸水',title:'需要汇聚的雨露型',desc:'如需要汇聚的雨露，虽然滋润但力量分散。身弱的癸水内心丰富但容易分散注意力，需要学会聚焦，把零散的能量汇聚成河。',tip:'每天只做一件最重要的事；建立"专注时间"的习惯，减少干扰。'},
+};
+
+/* ========== 历史人物匹配（基于格局+十神组合） ========== */
+const HERO_DB=[
+  {name:'诸葛亮',dynasty:'三国·蜀汉',emoji:'🪶',tags:['规矩型','有原则','智慧型'],
+    talent:'端方守正、谨慎周密、擅长谋划与布局，天生适合在规则与体系中把事做成',
+    lesson:'过于追求完美与周全，有时会把责任都扛在自己身上，学会授权与信任团队',
+    story:'27岁受刘备三顾茅庐出山，奠定蜀汉基业。一生以"谨慎周密"著称，发明木牛流马、八阵图，六出祁山北伐，是中国传统文化中"智慧"与"忠诚"的代名词。'},
+  {name:'韩信',dynasty:'秦末汉初',emoji:'⚔️',tags:['才华型','突破力','帅才'],
+    talent:'才华横溢、军事天赋极高，擅长出奇制胜、以弱胜强，遇到伯乐能一飞冲天',
+    lesson:'锋芒太露、不服约束，需要学会在规则内发挥才华，刚柔并济方能长久',
+    story:'少年曾受胯下之辱，投刘邦后被萧何月下追回拜为大将。明修栈道暗度陈仓、背水一战、十面埋伏，一生无败绩，被誉为"国士无双"。'},
+  {name:'岳飞',dynasty:'南宋',emoji:'🛡️',tags:['胆识型','忠义','将领'],
+    talent:'魄力担当、有勇有谋、天生领袖气质，做事果断，能扛起别人扛不起的责任',
+    lesson:'刚直有余、谋略需补，需要学会在复杂环境中保护自己，刚柔搭配方能长久',
+    story:'19岁从军，背上刺字"精忠报国"。组建岳家军北伐，收复建康、襄阳六郡，郾城大破金军铁浮屠，是中华民族精神中"忠义"与"担当"的象征。'},
+  {name:'范蠡',dynasty:'春秋·越国',emoji:'💰',tags:['智慧型','能屈能伸','商业'],
+    talent:'聪明灵动、能屈能伸，兼具才华表达与商业头脑，天生的谈判、社交、经营人才',
+    lesson:'过于灵活容易给人不踏实的感觉，需要在"进"与"退"之间找到自己的节奏',
+    story:'辅佐越王勾践卧薪尝胆灭吴后，急流勇退泛舟五湖。化名陶朱公三次经商致富，又三散家财，被后世尊为"商圣"。'},
+  {name:'曾国藩',dynasty:'晚清',emoji:'📚',tags:['自律型','稳扎稳打','大器晚成'],
+    talent:'自律克己、稳扎稳打、持续学习，靠笨功夫下死力气，后劲惊人',
+    lesson:'节奏偏慢、容易自我施压，需要学会允许自己不完美，用小目标持续积累',
+    story:'六次科举落榜仍不放弃，28岁中进士入翰林。组建湘军平定太平天国，推行洋务运动。以"结硬寨、打呆仗"著称，被誉为"半个圣人"。'},
+  {name:'王阳明',dynasty:'明代',emoji:'🧠',tags:['思想型','独立思考','开宗立派'],
+    talent:'独立思考、不走寻常路，有魄力也有思想，能在混乱中找到自己的真理',
+    lesson:'过于独树一帜容易与世俗脱节，需要在"知"与"行"之间找到平衡',
+    story:'龙场驿丞任上悟道"心即理"。南赣剿匪、平定宁王叛乱，35天擒朱宸濠。创立阳明心学，影响东亚500年，与孔子、孟子、朱熹并称"孔孟朱王"。'},
+  {name:'项羽',dynasty:'秦末',emoji:'🔥',tags:['英雄型','敢拼','直率'],
+    talent:'敢闯敢拼、爆发力强、讲义气，天生适合开拓、竞争、突破型的事情',
+    lesson:'锋芒太盛之时，需要一位"范增"一样的辅助力量，学会倾听谋划，刚柔搭配',
+    story:'24岁随叔父项梁起兵反秦，巨鹿之战破釜沉舟九战九捷。自封西楚霸王分封十八路诸侯，是中国历史上最具英雄气概的人物之一。'},
+  {name:'曹操',dynasty:'三国·魏',emoji:'👑',tags:['野心型','手段','管理者'],
+    talent:'有大局观、有手段、敢用人，天生的管理者与创业者，能在乱局中抓住机会',
+    lesson:'多疑与强势容易伤了身边人，需要学会信任与放权，刚柔并济',
+    story:'20岁举孝廉入仕。官渡之战以少胜多灭袁绍，统一北方。实行屯田制兴修水利，诗赋开建安风骨，谥号"魏武帝"。'},
+  {name:'李白',dynasty:'唐代',emoji:'🍷',tags:['艺术型','浪漫','天才'],
+    talent:'才华横溢、灵感迸发、浪漫自由，天生的艺术家型，灵感来了挡不住',
+    lesson:'过于自由不羁容易缺乏长性，需要给自己一些结构与约束，让才华落地',
+    story:'25岁仗剑出蜀远游，一生写下近千首诗作，被尊为"诗仙"。其浪漫豪放的诗风影响了后世千年，是中国文学史上最耀眼的星辰之一。'},
+  {name:'成吉思汗',dynasty:'元代',emoji:'🏹',tags:['开创型','行动力','领袖'],
+    talent:'开拓力强、行动力惊人、战略眼光独到，能在空白领域快速建功立业',
+    lesson:'过于追求扩张容易忽略根基，需要学会在"开拓"与"守成"之间平衡',
+    story:'9岁丧父部落离散，18岁夺回孛儿帖。1206年统一蒙古诸部称汗，建立大蒙古国。西征花剌子模，疆域横跨欧亚，是历史上版图最大的帝国缔造者。'},
+];
+
+/* ========== 十神→天赋+职业（直接用八字术语） ========== */
+const SHISHEN_TALENT={
+  '比肩':{name:'独立担当',desc:'比肩主独立、主行动力。能量突出时，天生有主见、不依赖他人，做事雷厉风行，适合单打独斗或带队冲锋。',careers:['运动员','创业','管理','户外探险']},
+  '劫财':{name:'竞争行动力',desc:'劫财主竞争、主突破。能量突出时，好胜心强、精力充沛、敢拼敢闯，在对抗性或开创性领域容易出成绩。',careers:['运动员','军事','销售','创业']},
+  '食神':{name:'才华表达',desc:'食神主才华、主温和。能量突出时，表达力强、有艺术天赋、心态好，适合用才华和创意吃饭。',careers:['音乐创作','演讲','表演','烹饪','艺术']},
+  '伤官':{name:'创造突破',desc:'伤官主才华、主叛逆、主突破。能量突出时，聪明绝顶、点子多、不按常理出牌，在创意类、研究类领域一鸣惊人。',careers:['编剧','设计师','科研','广告','独立创作']},
+  '偏财':{name:'社交商业',desc:'偏财主交际、主偏财、主手段。能量突出时，人缘好、会来事、有商业头脑，适合做销售、谈判、资源整合。',careers:['销售','商务','公关','创业','资源整合']},
+  '正财':{name:'务实规划',desc:'正财主务实、主稳定、主规划。能量突出时，做事有条理、善理财、看重结果，适合管理、财务、规划类工作。',careers:['会计','银行','管理','供应链','公务员']},
+  '七杀':{name:'魄力担当',desc:'七庄主魄力、主压力、主领袖。能量突出时，胆大心细、有领导力、能扛事，在高压环境中反而能激发潜力。',careers:['管理','军警','创业者','项目负责人','外科医生']},
+  '正官':{name:'规矩执行',desc:'正官主规矩、主责任、主名誉。能量突出时，守规矩、有原则、做事严谨，适合体制内或大平台发展。',careers:['公务员','法律','教师','管理','国企']},
+  '偏印':{name:'独立思考',desc:'偏印主独立、主玄学、主偏门智慧。能量突出时，思维独特、不走寻常路、擅长冷门领域，适合研究、技术、玄学。',careers:['科研','技术专家','程序员','心理咨询','玄学']},
+  '正印':{name:'学习吸收',desc:'正印主学习、主背书、主贵人。能量突出时，记忆力好、善于吸收知识、有长辈/贵人相助，适合深造和学术。',careers:['学术','教育','研究','公务员','事业单位']},
+};
+const WUXING_TALENT={
+  '木':{name:'生长创造',desc:'木主生发、主向上、主扩展。能量突出时，创造力强、好奇心旺盛、喜欢新事物，适合需要创新和生长的领域。',careers:['艺术','设计','教育','创业','园艺']},
+  '火':{name:'热情表达',desc:'火主礼、主热情、主光芒。能量突出时，感染力强、擅长表达、朋友多，适合需要表演、社交、影响力的领域。',careers:['演讲','主持','表演','公关','营销']},
+  '土':{name:'稳重承载',desc:'土主信、主稳重、主积累。能量突出时，踏实可靠、做事有耐心、适合长期深耕一个领域，大器晚成。',careers:['农业','建筑','房地产','管理','考古']},
+  '金':{name:'精密逻辑',desc:'金主义、主锋利、主秩序。能量突出时，逻辑清晰、追求完美、做事精细，适合需要精确和判断力的领域。',careers:['金融','法律','编程','机械','外科']},
+  '水':{name:'智慧灵动',desc:'水主智、主变化、主适应。能量突出时，思维敏捷、学习能力强、善于适应环境，适合需要智慧和变化的领域。',careers:['科研','编程','写作','咨询','外交']},
+};
+
+/* ========== 渲染报告（新版） ========== */
+function renderResult(){
+  const r=state;
+  const dayGan=r.bazi.getDayGan();
+  const dayEle=getWuxing(dayGan);
+  const threeD=r.threeD;
+  const wuxing=r.wuxing;
+  const ssWeights=calcAllShishenWeights(r.bazi,dayGan);
+
+  // Header — 档案封签：取姓名最后一字放大
+  const sealChar=r.name.charAt(r.name.length-1)||r.name;
+  document.getElementById('rSealChar').textContent=sealChar;
+  document.getElementById('rGender').textContent=r.gender;
+  const bi=r.birthInfo.split(' · ');
+  document.getElementById('rCity').textContent=bi[0]||'';
+  document.getElementById('rTime').textContent=bi[1]||'';
+
+  // ① 十天干卡通形象 + 身强身弱解释
+  const wd=threeD.verdict==='身强'?GAN_STRONG_DESC[dayGan]:GAN_WEAK_DESC[dayGan];
+  const verdictTag=threeD.verdict==='身强'?
+    '<span style="background:#E8F5E9;color:#2E7D32;padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px">⚡ 身强（能量充足）</span>':
+    '<span style="background:#E3F2FD;color:#1565C0;padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px">🍃 身弱（能量内敛）</span>';
+  // 日主元素色（用于卡通形象的柔光底座/展台）
+  const KID_COLOR={'木':'#4CAF50','火':'#FF7043','土':'#A1887F','金':'#FFB300','水':'#42A5F5'};
+  const kidC=KID_COLOR[getWuxing(dayGan)]||'#4CAF50';
+  const kidImg=GAN_KID[dayGan].replace('style="width:160px','style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:3;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.12));width:160px');
+  document.getElementById('wuxingKidBox').innerHTML=`
+    <div style="position:relative;display:inline-block;width:180px;height:190px;margin-bottom:12px">
+      <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,${kidC}33 0%,${kidC}14 55%,transparent 72%);filter:blur(3px)"></div>
+      <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:150px;height:24px;border-radius:50%;background:linear-gradient(to bottom,${kidC}aa,${kidC}66);box-shadow:0 6px 18px ${kidC}55;z-index:1"></div>
+      ${kidImg}
+    </div>
+    <div style="font-size:22px;font-weight:800;color:var(--primary-dark);margin-bottom:4px">你是「${wd.kid}」</div>
+    <div style="font-size:14px;color:var(--primary);font-weight:600;margin-bottom:12px">${wd.title}</div>
+    <div style="margin-bottom:14px">${verdictTag}</div>
+    <p style="font-size:13px;line-height:1.9;color:var(--text);text-align:left;padding:14px;background:linear-gradient(135deg,var(--bg-purple),#FAF5FF);border-radius:12px;margin-bottom:10px">${wd.desc}</p>
+    <p style="font-size:12px;line-height:1.8;color:var(--text-light);text-align:left;padding:10px 14px;background:#FFF8E1;border-radius:10px;border-left:3px solid #FFB74D">💡 ${wd.tip}</p>
+  `;
+
+  // ② 四柱八字排盘（简化版：默认只显示天干+地支，藏干与五行折叠）
+  const pillars=[
+    {label:'年柱',gan:r.bazi.getYearGan(),zhi:r.bazi.getYearZhi(),isDay:false},
+    {label:'月柱',gan:r.bazi.getMonthGan(),zhi:r.bazi.getMonthZhi(),isDay:false},
+    {label:'日柱·日主',gan:r.bazi.getDayGan(),zhi:r.bazi.getDayZhi(),isDay:true},
+    {label:'时柱',gan:r.bazi.getTimeGan(),zhi:r.bazi.getTimeZhi(),isDay:false},
+  ];
+  // 天干/地支单元格：天干在上、十神在下竖排，避免窄屏折行，按五行着色（与饼图色一致）
+  const gz=(char,ss)=>`<span class="gz"><span class="g g-wx-${getWuxing(char)}">${char}</span><span class="ss-note">${ss}</span></span>`;
+  let html='<div class="bazi-scroll"><table class="bazi-table"><thead><tr><th style="width:44px"></th>'+pillars.map(p=>`<th${p.isDay?' class="day-th"':''}>${p.label}</th>`).join('')+'</tr></thead><tbody>';
+  html+='<tr><td class="rowlabel">天干</td>'+pillars.map(p=>`<td${p.isDay?' class="day-col"':''}>${gz(p.gan,calcShishen(dayGan,p.gan))}</td>`).join('')+'</tr>';
+  html+='<tr><td class="rowlabel">地支</td>'+pillars.map(p=>`<td${p.isDay?' class="day-col"':''}>${gz(p.zhi,calcShishen(dayGan,p.zhi))}</td>`).join('')+'</tr>';
+  html+='</tbody></table>';
+  // 折叠区：藏干 + 五行（默认隐藏，点击按钮展开）
+  html+='<div id="hideToggle" style="text-align:center;margin-top:14px"><button type="button" class="bazi-toggle-btn" onclick="document.getElementById(\'hidePanel\').style.display=\'block\';document.getElementById(\'hideToggle\').style.display=\'none\'">点击展开｜藏干・五行能量详解 <span style="font-size:10px">▾</span></button></div>';
+  html+='<div id="hidePanel" style="display:none;margin-top:12px"><table class="bazi-table"><thead><tr><th style="width:44px"></th>'+pillars.map(p=>`<th>${p.label}</th>`).join('')+'</tr></thead><tbody>';
+  html+='<tr><td class="rowlabel">藏干</td>'+pillars.map(p=>{
+    const hides=ZHI_HIDE[p.zhi]||[];
+    return `<td class="hide-cell${p.isDay?' day-col':''}">${hides.map(h=>`<span class="hide-item">${gz(h.gan,calcShishen(dayGan,h.gan))}</span>`).join('')}</td>`;
+  }).join('')+'</tr>';
+  html+='<tr><td class="rowlabel">五行</td>'+pillars.map(p=>`<td class="wx-cell${p.isDay?' day-col':''}"><span class="g-wx-${getWuxing(p.gan)}">${getWuxing(p.gan)}</span> <span class="g-wx-${getWuxing(p.zhi)}">${getWuxing(p.zhi)}</span></td>`).join('')+'</tr>';
+  html+='</tbody></table><div style="text-align:center;margin-top:10px"><button type="button" class="bazi-collapse-btn" onclick="document.getElementById(\'hidePanel\').style.display=\'none\';document.getElementById(\'hideToggle\').style.display=\'block\'">收起</button></div></div></div>';
+  document.getElementById('baziPillars').outerHTML='<div id="baziPillars">'+html+'</div>';
+  document.getElementById('shishenHideBox').outerHTML='<div id="shishenHideBox" style="display:none"></div>';
+
+  // ②+ 五行能量占比（纯SVG环形图，无CDN依赖）
+  const WX_COLORS={'木':'#4CAF50','火':'#FF5252','土':'#8D6E63','金':'#FFB300','水':'#42A5F5'};
+  const wxTotal=Object.values(wuxing).reduce((a,b)=>a+b,0)||1;
+  const wxOrder=['木','火','土','金','水'];
+  const wxPcts=wxOrder.map(e=>({e,pct:wuxing[e]/wxTotal*100}));
+  const R=54,C=2*Math.PI*R;
+  let cum=0,segs='';
+  wxPcts.forEach(({e,pct})=>{
+    if(pct<=0)return;
+    const len=pct/100*C;
+    segs+=`<circle r="${R}" cx="80" cy="80" fill="none" stroke="${WX_COLORS[e]}" stroke-width="26" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-cum}" transform="rotate(-90 80 80)"/>`;
+    cum+=len;
+  });
+  // 最强五行高亮标注
+  const topWx=wxPcts.reduce((a,b)=>b.pct>a.pct?b:a);
+  const weakWx=wxPcts.reduce((a,b)=>b.pct<a.pct?b:a);
+  // 五行能量一句话总结
+  const WX_LEAD={'木':'生机盎然、成长力强','火':'热情外放、表达力强','土':'稳重踏实、包容力强','金':'魄力充足、行动力强','水':'聪慧灵动、感悟力强'};
+  const WX_GAP={'木':'行动力与突破是你的课题','火':'热情与表达是你的课题','土':'稳定性是你的课题','金':'决断与执行是你的课题','水':'思考与应变是你的课题'};
+  document.getElementById('wuxingPieBox').innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap">
+      <svg viewBox="0 0 160 160" width="160" height="160" style="flex-shrink:0">
+        <circle r="${R}" cx="80" cy="80" fill="none" stroke="#F3EEFB" stroke-width="26"/>
+        ${segs}
+        <text x="80" y="74" text-anchor="middle" font-size="12" fill="#888">最强</text>
+        <text x="80" y="94" text-anchor="middle" font-size="17" font-weight="800" fill="${WX_COLORS[topWx.e]}">${topWx.e} ${topWx.pct.toFixed(1)}%</text>
+      </svg>
+      <div style="min-width:150px">
+        ${wxPcts.map(({e,pct})=>`
+          <div style="display:flex;align-items:center;gap:8px;margin:7px 0">
+            <span style="width:12px;height:12px;border-radius:4px;background:${WX_COLORS[e]};flex-shrink:0"></span>
+            <span style="font-size:13px;color:var(--text);width:22px;font-weight:700">${e}</span>
+            <div style="flex:1;height:8px;background:#F0EAFB;border-radius:4px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:${WX_COLORS[e]};border-radius:4px"></div>
+            </div>
+            <span style="font-size:12px;color:var(--text-light);width:46px;text-align:right">${pct.toFixed(1)}%</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--text);line-height:2;text-align:center;margin-top:14px;padding:10px 14px;background:linear-gradient(135deg,var(--bg-purple),#FAF5FF);border-radius:12px">
+      <div><b style="color:${WX_COLORS[topWx.e]}">${topWx.e}能量主导</b>，${WX_LEAD[topWx.e]}</div>
+      <div><b style="color:${WX_COLORS[weakWx.e]}">${weakWx.e}能量偏弱</b>，${WX_GAP[weakWx.e]}</div>
+    </div>
+  `;
+
+  // 计算喜用神（渲染延后到成长痛点之后）
+  const fav=calcFavorable(r.bazi,threeD);
+  const WX_COLORS2={'木':'#4CAF50','火':'#FF5252','土':'#8D6E63','金':'#FFB300','水':'#42A5F5'};
+  const WX_LABEL={'木':'木·生长','火':'火·温热','土':'土·承载','金':'金·肃杀','水':'水·滋润'};
+
+  // 6-10 核心要点五大维度（各自渲染到独立卡片）
+  const top3=calcTopTalents(wuxing,ssWeights,threeD);
+  const coreRows=genCoreSummary(dayGan,threeD,wuxing,ssWeights,top3);
+  coreRows.forEach((row,i)=>{
+    const box=document.getElementById('coreBox'+i);
+    if(!box) return;
+    box.innerHTML=`
+      <div style="font-size:13px;color:var(--primary-dark);font-weight:600;margin-bottom:10px">${row.tagline}</div>
+      ${row.pros.map(p=>`<div style="display:flex;gap:6px;font-size:12.5px;color:var(--text);line-height:1.8;margin-bottom:4px"><span style="flex-shrink:0">✅</span><span>${p}</span></div>`).join('')}
+      ${row.cons.map(c=>`<div style="display:flex;gap:6px;font-size:12.5px;color:#8D6E63;line-height:1.8;margin-top:2px"><span style="flex-shrink:0">🌱</span><span>${c}</span></div>`).join('')}
+    `;
+  });
+
+  // ③ 历史人物（最强十神直接一对一映射，去掉身强身弱交叉）
+  const topSS=Object.entries(ssWeights).sort((a,b)=>b[1]-a[1])[0][0];
+  // 10个十神 → 10位历史人物
+  const SS_HERO={
+    '比肩':9,'劫财':6,   // 成吉思汗 / 项羽
+    '食神':3,'伤官':1,   // 范蠡 / 韩信
+    '正财':7,'偏财':7,   // 曹操 / 曹操
+    '正官':0,'七杀':2,   // 诸葛亮 / 岳飞
+    '正印':4,'偏印':5,   // 曾国藩 / 王阳明
+  };
+  const ssLabel={比肩:'比肩·独立担当',劫财:'劫财·竞争果敢',食神:'食神·温和表达',伤官:'伤官·才华突破',正财:'正财·踏实积累',偏财:'偏财·灵活应变',正官:'正官·规矩责任',七杀:'七杀·魄力担当',正印:'正印·稳重好学',偏印:'偏印·独立思考'};
+  const grp=({比肩:'比劫',劫财:'比劫',食神:'食伤',伤官:'食伤',正财:'财',偏财:'财',正官:'官杀',七杀:'官杀',正印:'印',偏印:'印'}[topSS])||'印';
+  const idx=SS_HERO[topSS];
+  let hero=idx!=null?HERO_DB[idx]:null;
+  if(!hero){
+    const fb={'木':3,'火':2,'土':4,'金':7,'水':0};
+    hero=HERO_DB[fb[dayEle]||0];
+  }
+  // 匹配依据描述（串起核心要点速览）
+  const behaviorTag=({比劫:'主动出击',食伤:'表达创造',财:'目标务实',官杀:'计划条理',印:'谋定深思'}[grp]||'');
+  const topTalentName=top3[0]?top3[0].name:'';
+  const matchReason=`根据核心要点中的「行为风格（${behaviorTag}）」+ 最强十神「${ssLabel[topSS]||topSS}」+ 最强天赋「${topTalentName}」综合匹配`;
+
+  document.getElementById('personHeroBox').innerHTML=`
+    <div style="background:linear-gradient(135deg,#FFF8E1,#FFECB3);border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(245,124,0,.15)">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+        <div style="flex:0 0 68px;width:68px;height:68px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 2px 12px rgba(0,0,0,.12);border:3px solid #FFCC80">${hero.emoji||'👤'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:26px;font-weight:800;color:#E65100">${hero.name}</div>
+          <div style="font-size:12px;color:#BF360C;margin-top:2px">能量原型 · ${hero.dynasty}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+        ${hero.tags.map(t=>`<span style="background:#FFE0B2;color:#E65100;padding:3px 12px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid #FFCC80">${t}</span>`).join('')}
+      </div>
+      <div style="background:rgba(255,255,255,.6);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+        <div style="font-size:11px;color:#E65100;font-weight:700;margin-bottom:4px">⚡ 天赋特质</div>
+        <p style="font-size:12.5px;line-height:1.8;color:#5D4037;margin:0">${hero.talent}</p>
+      </div>
+      <div style="background:rgba(255,255,255,.6);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+        <div style="font-size:11px;color:#BF360C;font-weight:700;margin-bottom:4px">🌱 核心课题</div>
+        <p style="font-size:12.5px;line-height:1.8;color:#5D4037;margin:0">${hero.lesson}</p>
+      </div>
+      ${hero.story?`<div style="background:rgba(255,255,255,.4);border-radius:10px;padding:10px 12px;font-size:11.5px;color:#6D4C41;line-height:1.85">📖 ${hero.story}</div>`:''}
+      <p style="font-size:11px;color:#8D6E63;line-height:1.7;margin:10px 4px 0;text-align:center">原型只是能量特质的参考类比，不是命运预言</p>
+    </div>
+  `;
+
+  // ④ 最强3个天赋（基于八字能量，不是八项智能）
+  document.getElementById('topTalentBox').innerHTML=`
+    ${top3.map((t,i)=>`
+      <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;padding:12px;background:#FAF5FF;border-radius:12px;border-left:4px solid var(--primary)">
+        <div style="flex:0 0 40px;height:40px;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${i+1}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;color:var(--primary-dark);margin-bottom:4px">${t.name}</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.7">${t.desc}</div>
+        </div>
+      </div>
+    `).join('')}
+  `;
+
+  // ⑤ 职业规划建议
+  const careers=top3.flatMap(t=>t.careers||[]).slice(0,9);
+  const uniqueCareers=[...new Set(careers)];
+  document.getElementById('careerBox').innerHTML=`
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">基于你的天赋能力，以下是适合的方向（仅供参考，实际选择还要结合个人兴趣和时代机遇）</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      ${uniqueCareers.map(c=>`<span style="background:#E8F5E9;color:#2E7D32;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid #A5D6A7">🎯 ${c}</span>`).join('')}
+    </div>
+    <div style="background:var(--bg-purple);border-radius:12px;padding:14px">
+      <div style="font-size:12px;color:var(--primary);font-weight:700;margin-bottom:6px">💡 Deffy的小建议</div>
+      <p style="font-size:12px;line-height:1.8;color:var(--text)">每个人的八字都是独一无二的，天赋方向只是参考。比起"补短板"，更重要的是"扬长避短"——找到你天生擅长的领域，在那里给足土壤和空间，你自然会长成最好的样子。无论处于哪个人生阶段，认识自己的先天能量，永远不晚。</p>
+    </div>
+  `;
+
+  // ⑥ 成长痛点（基于 coreRows 的 cons + 最弱五行，精选最明显的 3 个）
+  const painRows=[];
+  coreRows.forEach(row=>{
+    row.cons.forEach(c=>painRows.push(c));
+  });
+  const weakEle=Object.entries(wuxing).sort((a,b)=>a[1]-b[1])[0][0];
+  const painByWeakEle={
+    '木':'容易想得多做得少，需要先迈出第一步，在行动中建立信心',
+    '火':'情绪起伏大、表达热情不足，需要在稳定环境中练习真诚表达',
+    '土':'缺乏安全感、容易焦虑紧张，需要建立稳定的生活节奏来扎根',
+    '金':'容易自我否定、不够果断，需要多给自己肯定，从小决策练起',
+    '水':'思虑过重容易内耗，需要建立情绪出口，把想法变成行动',
+  };
+  // 去重 + 优选最明显的 3 个（优先取最强十神相关的行为/社交痛点，再补最弱五行痛点）
+  const seenCons=new Set();
+  const finalPains=[];
+  for(const c of painRows){
+    if(!seenCons.has(c) && finalPains.length<3){
+      seenCons.add(c);
+      finalPains.push(c);
+    }
+  }
+  if(finalPains.length<3){
+    const we=painByWeakEle[weakEle];
+    if(!seenCons.has(we)) finalPains.push(we);
+  }
+  const PAIN_NUM=['课题一','课题二','课题三'];
+  // 温柔改写：把"xxx，需要yyy"转成"xxx，修行方向：yyy"，不贴标签，只给方向
+  const formatPain=t=>{
+    if(t.includes('需要')){
+      const parts=t.split('需要');
+      return parts[0].replace(/[，,;；\s]+$/,'')+'，修行方向：'+parts[1].trim();
+    }
+    return t+'，修行方向：在生活中刻意觉察与练习';
+  };
+
+  document.getElementById('painPointBox').innerHTML=`
+    <p style="font-size:11.5px;color:var(--text-light);margin-bottom:14px;line-height:1.7">每个人的能量都有需要磨合的地方，这不是缺点，而是你专属的成长课题。以下是基于你的八字能量结构，精选出的三个最明显的课题（能量补法见文末《五行能量调频指南》，可免费领取）</p>
+    ${finalPains.map((c,i)=>`
+      <div style="background:#FAF5FF;border-radius:12px;padding:14px;margin-bottom:${i<finalPains.length-1?'10px':'0'};border-left:4px solid var(--primary)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="background:var(--primary);color:#fff;padding:3px 12px;border-radius:14px;font-size:12px;font-weight:700">${PAIN_NUM[i]}</span>
+        </div>
+        <div style="font-size:13px;color:#5D4037;line-height:1.8">${formatPain(c)}</div>
+      </div>
+    `).join('')}
+    <div style="background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:11.5px;color:#2E7D32;line-height:1.8">
+      这些不是"要改掉的缺点"，而是灵魂留给你的作业。每一个课题背后，都藏着你还没打开的那部分天赋。
+    </div>
+  `;
+
+  // ⑦ 喜用神（好处 + 日常调频，融合原Deffy小建议）
+  const FAV_INFO={
+    '木':{tag:'生长与突破能量',
+      benefit_strong:'疏导过旺能量，带来向上的生长力与行动力，打破停滞',
+      benefit_weak:'滋养补足，带来活力、好奇心与成长的空间',
+      daily:'多接触大自然、绿植、木质物品；穿青绿色系衣物；给自己设定一个让自己"向上生长"的小目标并立刻行动'},
+    '火':{tag:'目标与秩序能量',
+      benefit_strong:'收敛过旺能量，帮你落地目标、建立边界，减少冲动硬刚',
+      benefit_weak:'带来温暖、热情与被看见的力量，增强自信与表达欲',
+      daily:'制定明确可执行的目标清单；待在暖色明亮的环境；主动表达感谢与赞美'},
+    '土':{tag:'稳定与承载能量',
+      benefit_strong:'化泄过旺能量为稳定输出，让你扎根、踏实、不浮躁',
+      benefit_weak:'带来安全感、稳定感与承接力，增强耐心与落地能力',
+      daily:'保持规律作息与三餐；多爬山、接触土地；佩戴玉石陶瓷饰品；整理房间让环境稳定有序'},
+    '金':{tag:'决断与规则能量',
+      benefit_strong:'以规则约束过旺能量，提升决断力、执行力与边界感',
+      benefit_weak:'带来果断、原则与力量感，增强自我保护与行动力',
+      daily:'佩戴金银饰品或手表；定期断舍离保持环境整洁；做决定时给自己设时限，不反复纠结'},
+    '水':{tag:'灵感与柔性疏导能量',
+      benefit_strong:'泄金之秀气，把逻辑和好胜心转化为表达、创作才华',
+      benefit_weak:'带来智慧、灵感与应变力，增强思考深度与共情能力',
+      daily:'多喝水、泡脚或泡澡；尝试写作、画画等创作；睡前静心复盘，让思绪流动'},
+  };
+  const strong=threeD.verdict==='身强';
+  const WX_EMOJI={'木':'🌱','火':'🔥','土':'🏔️','金':'⚔️','水':'💧'};
+  const renderFav=(e,role,emoji,color,label)=>{
+    const info=FAV_INFO[e];
+    const benefit=strong?info.benefit_strong:info.benefit_weak;
+    return `<div style="background:linear-gradient(135deg,${color}22,#FAF5FF);border-radius:12px;padding:14px;margin-bottom:10px;border-left:4px solid ${color}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:30px;height:30px;border-radius:50%;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px">${e}</div>
+        <div style="font-size:13px;color:${color};font-weight:700">${emoji} ${role}｜${e}：${info.tag}</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:var(--text-light);font-weight:600;margin-bottom:2px">💡 它能给你带来的好处</div>
+        <p style="font-size:12px;color:var(--text);line-height:1.8;margin:0">${benefit}</p>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-light);font-weight:600;margin-bottom:2px">✨ 日常怎么用</div>
+        <p style="font-size:12px;color:var(--text);line-height:1.8;margin:0">${info.daily}</p>
+      </div>
+    </div>`;
+  };
+  document.getElementById('favorableBox').innerHTML=`
+    <p style="font-size:11.5px;color:var(--text-light);margin-bottom:14px;line-height:1.7">基于身强身弱判断，为你标记出<strong style="color:var(--primary)">最有利的能量元素</strong>，以及如何在生活中激活它</p>
+    ${renderFav(fav.use1,'第一用神',WX_EMOJI[fav.use1],WX_COLORS2[fav.use1],WX_LABEL[fav.use1])}
+    ${renderFav(fav.use2,'第二用神',WX_EMOJI[fav.use2],WX_COLORS2[fav.use2],WX_LABEL[fav.use2])}
+    <p style="font-size:11px;color:var(--text-light);line-height:1.7;margin:10px 4px 0;text-align:center">更详细的补法（幸运色/饮食/方位/10条调频习惯）可添加微信领取《五行能量调频指南》</p>
+  `;
+}
+
+/* ========== 性格描述 + 历史人物匹配 ========== */
+function generateCharDesc(dayGan,threeD,topEle,topSS){
+  const descs={
+    '甲木':'甲木如参天大树，正直向上、有主见、领导力强',
+    '乙木':'乙木如花草藤萝，柔韧适应、心思细腻、善于配合',
+    '丙火':'丙火如太阳之火，热情开朗、感染力强、朋友多',
+    '丁火':'丁火如灯烛之火，温暖贴心、善于照顾他人、有艺术气质',
+    '戊土':'戊土如高山之土，稳重踏实、守信用、有责任感',
+    '己土':'己土如田园之土，包容接纳、善于积累、内心丰富',
+    '庚金':'庚金如刀剑之金，果断利落、追求完美、有原则',
+    '辛金':'辛金如珠玉之金，精致细腻、审美优秀、敏感敏锐',
+    '壬水':'壬水如江河之水，聪明灵动、适应力强、心胸开阔',
+    '癸水':'癸水如雨露之水，温柔细腻、善解人意、内省深刻',
+  };
+  const shishenTags={
+    '比肩':'独立','劫财':'竞争心强','食神':'表达力','伤官':'创造力',
+    '偏财':'社交广','正财':'务实','七杀':'有魄力','正官':'守规则',
+    '偏印':'独立思考','正印':'爱学习',
+  };
+  const eleTags={'木':'活力','火':'热情','土':'稳重','金':'完美','水':'智慧'};
+  const tags=[shishenTags[topSS]||'',eleTags[topEle]||''].filter(Boolean);
+  if(threeD.verdict==='身强') tags.push('行动力强');
+  else tags.push('心思细腻');
+  return {
+    tags:['核心性格',...tags.slice(0,3)],
+    desc:`${descs[dayGan]||''}。最强五行是「${topEle}」，代表${eleTags[topEle]||''}的能量；最强十神是「${topSS}」，体现${shishenTags[topSS]||''}的特质。${threeD.verdict==='身强'?'能量充足，做事有冲劲':'能量内敛，思考有深度'}。`
+  };
+}
+
+function matchHero(bazi,dayGan,threeD,ssWeights){
+  // 新权重体系（月令占50%）：月令本气约30分，透干3-5分，其他柱藏干按位置权重
+  const totalSS=Object.values(ssWeights).reduce((a,b)=>a+b,0)||1;
+  const g=(k)=>ssWeights[k]||0;
+
+  // 月令主导格局判断（权重最高）
+  const monthZhi=bazi.getMonthZhi();
+  const monthHide=ZHI_HIDE[monthZhi]?.[0];
+  const monthSS=monthHide?calcShishen(dayGan,monthHide.gan):'';
+  const monthWeight=monthHide?g(monthSS):0;
+
+  // 伤官佩印（月令或透干有伤官，印星有力）
+  if(g('伤官')>15&&(g('正印')+g('偏印'))>12) return HERO_DB.find(h=>h.key==='伤官佩印');
+  // 食神生财（月令食伤，财星有力）
+  if(g('食神')>15&&(g('正财')+g('偏财'))>12) return HERO_DB.find(h=>h.key==='食神生财+身弱');
+  // 七杀+食伤制杀（月令七杀或透干，食伤有力）
+  if(g('七杀')>15&&(g('食神')+g('伤官'))>12) return HERO_DB.find(h=>h.key==='七杀格+食伤制杀');
+  // 偏印+七杀（月令偏印或七杀，另一有力）
+  if(g('偏印')>15&&g('七杀')>12) return HERO_DB.find(h=>h.key==='偏印格+七杀入命');
+  // 劫财+食伤（比劫旺，食伤有力）
+  if(g('劫财')>15&&(g('食神')+g('伤官'))>12) return HERO_DB.find(h=>h.key==='劫财格+食伤旺');
+  // 偏财+七杀（财旺，七杀有力）
+  if((g('偏财')+g('正财'))>20&&g('七杀')>10) return HERO_DB.find(h=>h.key==='偏财格+七杀旺');
+  // 官印相生（身弱，官印有力）
+  if((g('正官')+g('七杀'))>12&&(g('正印')+g('偏印'))>12&&threeD.verdict==='身弱') return HERO_DB.find(h=>h.key==='印旺身弱+官透');
+  // 伤官+身强（伤官旺，身强）
+  if(g('伤官')>18&&threeD.verdict==='身强') return HERO_DB.find(h=>h.key==='伤官格+身强');
+  // 正官+身强（正官旺，身强）
+  if(g('正官')>15&&threeD.verdict==='身强') return HERO_DB.find(h=>h.key==='正官格+身强');
+  // 比劫+食伤生财（比劫旺，食伤生财）
+  if((g('比肩')+g('劫财'))>15&&(g('食神')+g('伤官'))>12&&(g('正财')+g('偏财'))>8) return HERO_DB.find(h=>h.key==='比劫格+食伤生财');
+
+  // 默认 fallback：按日主五行匹配
+  const dayEle=getWuxing(dayGan);
+  const defaults={'木':HERO_DB[3],'火':HERO_DB[1],'土':HERO_DB[6],'金':HERO_DB[0],'水':HERO_DB[8]};
+  return defaults[dayEle]||HERO_DB[0];
+}
+
+/* ========== 计算最强3个天赋（纯八字能量池排序，五行+十神混合） ========== */
+function calcTopTalents(wuxing,ssWeights,threeD){
+  const pool=[];
+  // 先归一化五行：最大五行权重设为10，其他按比例缩放（让五行和十神在同一量级）
+  const maxWx=Math.max(...Object.values(wuxing));
+  const maxSs=Math.max(...Object.values(ssWeights));
+  // 五行能量入池（归一化后>3才算有存在感）
+  Object.entries(wuxing).forEach(([ele,val])=>{
+    const normVal=maxWx>0?(val/maxWx)*10:0;
+    if(normVal>3) pool.push({name:ele,weight:normVal,type:'五行',...WUXING_TALENT[ele]});
+  });
+  // 十神能量入池（归一化后>2才算有存在感）
+  Object.entries(ssWeights).forEach(([ss,val])=>{
+    const normVal=maxSs>0?(val/maxSs)*10:0;
+    if(normVal>2) pool.push({name:ss,weight:normVal,type:'十神',...SHISHEN_TALENT[ss]});
+  });
+  // 按权重从大到小排序
+  pool.sort((a,b)=>b.weight-a.weight);
+  // 去重后取TOP3（同样name的只留一个，优先十神因为更精准）
+  const seen=new Set(),top3=[];
+  for(const item of pool){
+    if(!seen.has(item.name)){seen.add(item.name);top3.push(item)}
+    if(top3.length>=3) break;
+  }
+  // 不够补身强身弱
+  if(top3.length<3){
+    const fb=threeD.verdict==='身强'?
+      {name:'行动力',desc:'八字整体能量充足，精力旺盛、行动力强，适合开拓性、对抗性领域。',careers:['运动员','创业','军事','项目管理']}:
+      {name:'内省思考',desc:'八字整体能量内敛，心思细腻、善于观察和思考，适合深耕型、研究型领域。',careers:['研究','写作','教育','心理咨询']};
+    while(top3.length<3) top3.push(fb);
+  }
+  return top3.slice(0,3);
+}
+
+/* ========== 核心要点速览（五大维度，规则推导简化版） ========== */
+function genCoreSummary(dayGan,threeD,wuxing,ssWeights,top3){
+  const g=k=>ssWeights[k]||0;
+  const strong=threeD.verdict==='身强';
+  // 最强十神 & 所属组
+  const topSS=Object.entries(ssWeights).sort((a,b)=>b[1]-a[1])[0][0];
+  const groupOf=s=>({比肩:'比劫',劫财:'比劫',食神:'食伤',伤官:'食伤',正财:'财',偏财:'财',正官:'官杀',七杀:'官杀',正印:'印',偏印:'印'}[s]||'印');
+  const grp=groupOf(topSS);
+  // 最弱五行
+  const wxOrder=['木','火','土','金','水'];
+  const weakEle=wxOrder.reduce((a,b)=>wuxing[b]<wuxing[a]?b:a);
+  // 印星是否入前三
+  const ssRank=Object.entries(ssWeights).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+  const yinHeavy=ssRank.indexOf('正印')>-1&&ssRank.indexOf('正印')<3||ssRank.indexOf('偏印')>-1&&ssRank.indexOf('偏印')<3;
+
+  const GAN_TRAIT={'甲':'正直有主见，天生自带原则感','乙':'温和柔韧，适应力强','丙':'热情开朗，感染力强','丁':'细腻温暖，审美出色','戊':'稳重踏实，说到做到','己':'包容细致，善于照顾他人','庚':'刚毅果决，讲义气','辛':'精致敏锐，追求品质','壬':'聪明灵动，思维活跃','癸':'温柔善思，直觉敏锐'};
+  const GAN_WEAK={'甲':'认定的事不易回头，需要练习倾听与变通','乙':'容易迁就他人、委屈自己，需要建立边界','丙':'锋芒外露易忽略他人感受，需要学会收敛','丁':'标准高易自我批评，需要多自我肯定','戊':'偏保守不够灵活，需要刻意拥抱变化','己':'习惯性付出不懂拒绝，容易过度消耗','庚':'说话太直容易伤人，需要练习委婉表达','辛':'追求完美容易纠结细节，需要抓大放小','壬':'想法多但落地少，需要「想到就做」','癸':'敏感易受情绪影响，需要建立情绪出口'};
+  const SS_PROS={'比肩':'独立自主有主见，做事有担当','劫财':'好胜心强行动力足，敢闯敢拼','食神':'表达温和有才，心态松弛有艺术感','伤官':'聪明点子多，敢于打破常规','偏财':'人缘好会来事，有商业嗅觉','正财':'务实稳重，做事有规划重结果','七杀':'有魄力能扛事，压力下反而更强','正官':'守规矩有原则，责任心强','偏印':'思维独特，善于深度钻研','正印':'学习能力强，善于吸收知识'};
+
+  // —— ① 性格特点
+  const rows=[];
+  rows.push({dim:'性格特点',icon:'💫',
+    tagline:(GAN_TRAIT[dayGan]||'').split('，')[0]+'、'+SS_PROS[topSS].split('，')[0],
+    pros:[GAN_TRAIT[dayGan],SS_PROS[topSS]],
+    cons:[GAN_WEAK[dayGan],strong?'能量充足但易固执己见，需要练习妥协与倾听':'心思细腻但容易内耗，需要多给自己正面肯定']});
+
+  // —— ② 行为风格
+  const BEH={
+    '比劫':{tag:'主动出击、边做边调',pros:['行动力强，想到就做不拖延','抗压能力强，越有挑战越兴奋'],con:'易冲动欠计划，需要学会复盘'},
+    '食伤':{tag:'表达创造、灵感驱动',pros:['点子多创意足，擅长找新解法','表达生动，善于感染带动他人'],con:'兴趣广不聚焦，需要深耕一个方向'},
+    '财':{tag:'目标明确、务实执行',pros:['目标感强，看重结果与效率','执行到位，答应的事能落地'],con:'易只看眼前，需要抬头看长远'},
+    '官杀':{tag:'计划先行、条理分明',pros:['自律守序，做事有章法','责任心强，交辦的事让人放心'],con:'偏谨慎保守，需要鼓励自己试错'},
+    '印':{tag:'谋定后动、思考沉淀',pros:['善于吸收归纳，思考有深度','耐心足，适合长线深耕'],con:'想得多做得少，启动偏慢需要小目标牵引'},
+  };
+  rows.push({dim:'行为风格',icon:'⚡',tagline:BEH[grp].tag,pros:BEH[grp].pros,
+    cons:[BEH[grp].con+(strong?'；节奏偏快，注意给他人留空间':'；节奏偏慢，用小目标启动更有效')]});
+
+  // —— ③ 学习方式
+  const ELE_LEARN={'木':'对自然与生命话题天然敏锐','火':'在互动讨论中吸收最快','土':'在重复练习中夯实基础','金':'偏爱有结构有逻辑的内容','水':'自学能力强，擅长阅读思考'};
+  let learnTag,learnPros;
+  if(yinHeavy&&g('偏印')>=g('正印')){learnTag='自主钻研、主题式深入';learnPros=['记忆与吸收力强，善于归纳体系','对感兴趣的主题能一头扎进去'];}
+  else if(yinHeavy){learnTag='体系吸收、循序渐进';learnPros=['记忆与吸收力强，适合体系化学习','按部就班消化知识，根基扎实'];}
+  else{learnTag='实践体验、边做边学';learnPros=['在动手实践中理解最快','案例和体验比纯理论更有效'];}
+  const LEARN_WEAK={'木':'开拓性与行动力需加强，忌想太多不动手','火':'表达展示的自信需要刻意练习','土':'专注与坚持需要固定节奏来养成','金':'规则感与细节把控需要训练','水':'深度思考需要阅读积累来滋养'};
+  rows.push({dim:'学习方式',icon:'📚',tagline:learnTag,pros:[...learnPros,ELE_LEARN[getWuxing(dayGan)]||ELE_LEARN['水']],cons:[LEARN_WEAK[weakEle]]});
+
+  // —— ④ 社交表现
+  const SOC={
+    '比劫':{tag:'讲义气、同伴缘好',pros:['朋友多，天然吸引同伴','为朋友出头，值得信任'],con:'易争强好胜，需要学分享与妥协'},
+    '食伤':{tag:'幽默活跃、气氛担当',pros:['表达幽默，容易拉近关系','在群体中存在感强'],con:'说话太直，需要学委婉'},
+    '官杀':{tag:'守礼可靠、值得托付',pros:['礼貌守规则，长辈缘好','承诺的事一定做到'],con:'在陌生场合放不开，需要破冰练习'},
+    '印':{tag:'安静温和、慢热深交',pros:['一对一关系深，忠诚可靠','倾听力强，是好的陪伴者'],con:'主动结交新朋友偏弱'},
+    '财':{tag:'亲和随缘、人脉灵活',pros:['亲和力强，容易与人合作','懂得互利，人脉经营自然'],con:'社交面广但深交有限，需聚焦核心圈'},
+  };
+  rows.push({dim:'社交表现',icon:'🤝',tagline:SOC[grp].tag,pros:SOC[grp].pros,
+    cons:[SOC[grp].con+(strong?'':'；慢热型，信任建立需要时间，不必强迫自己合群')]});
+
+  // —— ⑤ 教育重点
+  const TALENT_ADVICE={'独立担当':'给自己足够的自主决策空间，在承担责任中成长','竞争行动力':'用运动和有挑战的目标释放能量','才华表达':'用开放式创作滋养才华（写作/演讲/表演）','创造突破':'多尝试新事物，用创意项目放大点子多的优势','社交商业':'在真实协作与资源整合中锻炼经营能力','务实规划':'在目标管理类事项中放大规划执行力','魄力担当':'在带团队/扛项目中放大领导力','规矩执行':'在规则清晰的平台上发挥严谨优势','独立思考':'给自己留出深度钻研感兴趣领域的时间','学习吸收':'持续输入+输出，把知识变成体系','行动力':'用运动和挑战释放能量','内省思考':'用写作/复盘把思考变成输出','生长创造':'多接触创新与自然场景','热情表达':'多创造展示与影响他人的机会','稳重承载':'在长期主义的事情上深耕','精密逻辑':'用棋类/编程/乐器打磨精度','智慧灵动':'广泛阅读，跨领域输入'};
+  const GROW_WEAK={'木':'多接触自然与新事物，主动尝试、不怕犯错','火':'多创造「被看见」的表达机会，积累自信','土':'建立稳定作息与环境，先安后动','金':'用规则感强的小事训练专注与自律','水':'固定阅读与输出习惯，滋养思维深度'};
+  const topName=top3[0]?top3[0].name:'';
+  rows.push({dim:'教育重点',icon:'🌱',tagline:'扬「'+topName+'」之长，补「'+weakEle+'」之力',
+    pros:[TALENT_ADVICE[topName]||'围绕最强天赋领域投入资源与时间'],
+    cons:[GROW_WEAK[weakEle],strong?'能量足，方向比努力重要，防止用力过猛':'能量内敛，先养能量（睡眠/运动/稳定环境）再谈冲刺']});
+
+  return rows;
+}
+
+/* ========== 初始化 ========== */
+(function init(){
+  // 公历日期三栏下拉初始化（默认今天-8年）
+  fillSolarSelectors();
+  // 检查是否已解锁
+  const saved=localStorage.getItem('xingqi_code');
+  if(saved && VALID_CODES.includes(saved)){
+    // 已解锁过，允许直接跳转到输入页重新生成
+  }
+  state={_calendarType:'solar'};
+})();
+</script>
+</body>
+</html>

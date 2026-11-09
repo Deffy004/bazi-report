@@ -1,0 +1,8 @@
+.DS_Store
+*.zip
+.screenshots/
+gan_preview.html
+gen_guide.py
+server.py
+submissions.jsonl
+__pycache__/
