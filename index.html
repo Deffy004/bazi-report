@@ -211,6 +211,8 @@
 
   .empty-tip{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px;line-height:1.8}
 </style>
+<!-- 腾讯云开发 Web SDK -->
+<script src="https://imgcache.qq.com/qcloud/tcbjs/1.7.1/tcb.js"></script>
 </head>
 <body>
 
@@ -485,9 +487,9 @@ function onProvinceChange(){
 }
 function onCityChange(){ /* 空函数，保留 */ }
 
-/* ========== 兑换码验证后端（Google Apps Script） ========== */
-// 部署后将下方 URL 替换为你的 Apps Script 网页应用地址
-const REDEEM_API='https://script.google.com/macros/s/你的部署ID/exec';
+/* ========== 兑换码验证（腾讯云开发 CloudBase） ========== */
+// 部署后将下方 ENV_ID 替换为你的云开发环境 ID
+const CLOUDBASE_ENV_ID='你的环境ID';
 
 /* ========== 十神映射 ========== */
 const TIAN_GAN=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
@@ -1032,12 +1034,14 @@ async function verifyRedeem(){
   const err=document.getElementById('redeemError');
   const btn=event.target;
   if(!code){err.style.display='block';err.textContent='请输入兑换码';return}
-  if(REDEEM_API.includes('你的部署ID')){err.style.display='block';err.textContent='系统未配置，请联系管理员';return}
+  if(CLOUDBASE_ENV_ID==='你的环境ID'){err.style.display='block';err.textContent='系统未配置，请联系管理员';return}
   err.style.display='none';
   btn.disabled=true;btn.textContent='验证中...';
   try{
-    const res=await fetch(REDEEM_API+'?code='+encodeURIComponent(code));
-    const data=await res.json();
+    const app=tcb.init({env:CLOUDBASE_ENV_ID});
+    await app.auth({persistence:'local'}).anonymousAuthProvider().signIn();
+    const res=await app.callFunction({name:'verifyCode',data:{code:code}});
+    const data=res.result;
     if(data.ok){
       localStorage.setItem('xingqi_code',code);
       renderResult();
