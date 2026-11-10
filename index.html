@@ -558,35 +558,45 @@ const SHISHEN_NAMES={
 let state=null;
 
 /* ========== 导出 PDF ========== */
-// 把 root 下所有 inline SVG 替换为 <img> data URL（html2canvas 在移动端无法正确渲染 inline SVG）
-function _replaceSvgsWithImgs(root){
-  const backups=[];
-  const svgs=root.querySelectorAll('svg');
-  svgs.forEach(svg=>{
-    const rect=svg.getBoundingClientRect();
-    const w=svg.getAttribute('width')||rect.width||160;
-    const h=svg.getAttribute('height')||rect.height||160;
-    // 序列化 SVG（含中文 text 必须用 XMLSerializer + encodeURIComponent）
-    const xml=new XMLSerializer().serializeToString(svg);
-    const dataUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
-    const img=document.createElement('img');
-    img.src=dataUrl;
-    img.setAttribute('width',w);
-    img.setAttribute('height',h);
-    img.style.cssText=svg.getAttribute('style')||'';
-    backups.push({img,svg});
-    svg.parentNode.replaceChild(img,svg);
+// 五行环形图绘制（原生 canvas）：html2canvas 在移动端无法可靠渲染 inline SVG，但对 canvas 是直接像素拷贝
+function drawWuxingPie(canvas,pcts,topWx,colors){
+  if(!canvas) return;
+  const SIZE=160,cx=80,cy=80,R=54,LW=26;
+  const dpr=Math.max(2,window.devicePixelRatio||1);
+  canvas.width=SIZE*dpr;
+  canvas.height=SIZE*dpr;
+  canvas.style.width=SIZE+'px';
+  canvas.style.height=SIZE+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,SIZE,SIZE);
+  // 底环
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.strokeStyle='#F3EEFB';
+  ctx.lineWidth=LW;
+  ctx.stroke();
+  // 五行占比弧段（12点方向起顺时针）
+  let start=-Math.PI/2;
+  pcts.forEach(({e,pct})=>{
+    if(pct<=0) return;
+    const angle=pct/100*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(cx,cy,R,start,start+angle);
+    ctx.strokeStyle=colors[e];
+    ctx.lineWidth=LW;
+    ctx.lineCap='butt';
+    ctx.stroke();
+    start+=angle;
   });
-  return backups;
-}
-// 还原：把每个 <img> 换回对应的原 SVG
-function _restoreSvgs(backups){
-  for(let i=0;i<backups.length;i++){
-    const b=backups[i];
-    if(b.img.parentNode){
-      b.img.parentNode.replaceChild(b.svg,b.img);
-    }
-  }
+  // 中心文字
+  ctx.textAlign='center';
+  ctx.fillStyle='#888888';
+  ctx.font='12px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('最强',cx,74);
+  ctx.fillStyle=colors[topWx.e];
+  ctx.font='800 17px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(topWx.e+' '+topWx.pct.toFixed(1)+'%',cx,94);
 }
 
 async function exportPDF(){
@@ -594,9 +604,6 @@ async function exportPDF(){
   const originalText=btn.innerHTML;
   btn.disabled=true;
   btn.innerHTML='<span>⏳</span> 正在生成 PDF...';
-  
-  // 备份 SVG 列表，finally 里强制还原
-  let svgBackups=[];
   
   try{
     const { jsPDF } = window.jspdf;
@@ -610,9 +617,6 @@ async function exportPDF(){
     // 获取报告容器
     const reportEl = document.getElementById('pageResult');
     const name = document.getElementById('rSealChar').textContent || '用户';
-    
-    // ★ 关键修复：把所有 inline SVG 替换为 img，否则 html2canvas 在移动端渲染 SVG 为空白
-    svgBackups=_replaceSvgsWithImgs(reportEl);
     
     // ===== 标题页：临时 DOM 用 html2canvas 截图（避免 jsPDF 中文乱码） =====
     const titleDiv = document.createElement('div');
@@ -674,8 +678,6 @@ async function exportPDF(){
     console.error(e);
     alert('导出失败，请重试');
   }finally{
-    // ★ 无论成功失败都还原 SVG，避免破坏页面交互
-    if(svgBackups.length) _restoreSvgs(svgBackups);
     btn.disabled=false;
     btn.innerHTML=originalText;
   }
@@ -1380,19 +1382,11 @@ function renderResult(){
   document.getElementById('baziPillars').outerHTML='<div id="baziPillars">'+html+'</div>';
   document.getElementById('shishenHideBox').outerHTML='<div id="shishenHideBox" style="display:none"></div>';
 
-  // ②+ 五行能量占比（纯SVG环形图，无CDN依赖）
+  // ②+ 五行能量占比（原生 canvas 环形图，无CDN依赖，且 PDF 导出稳定）
   const WX_COLORS={'木':'#4CAF50','火':'#FF5252','土':'#8D6E63','金':'#FFB300','水':'#42A5F5'};
   const wxTotal=Object.values(wuxing).reduce((a,b)=>a+b,0)||1;
   const wxOrder=['木','火','土','金','水'];
   const wxPcts=wxOrder.map(e=>({e,pct:wuxing[e]/wxTotal*100}));
-  const R=54,C=2*Math.PI*R;
-  let cum=0,segs='';
-  wxPcts.forEach(({e,pct})=>{
-    if(pct<=0)return;
-    const len=pct/100*C;
-    segs+=`<circle r="${R}" cx="80" cy="80" fill="none" stroke="${WX_COLORS[e]}" stroke-width="26" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-cum}" transform="rotate(-90 80 80)"/>`;
-    cum+=len;
-  });
   // 最强五行高亮标注
   const topWx=wxPcts.reduce((a,b)=>b.pct>a.pct?b:a);
   const weakWx=wxPcts.reduce((a,b)=>b.pct<a.pct?b:a);
@@ -1401,12 +1395,7 @@ function renderResult(){
   const WX_GAP={'木':'行动力与突破是你的课题','火':'热情与表达是你的课题','土':'稳定性是你的课题','金':'决断与执行是你的课题','水':'思考与应变是你的课题'};
   document.getElementById('wuxingPieBox').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap">
-      <svg viewBox="0 0 160 160" width="160" height="160" style="flex-shrink:0">
-        <circle r="${R}" cx="80" cy="80" fill="none" stroke="#F3EEFB" stroke-width="26"/>
-        ${segs}
-        <text x="80" y="74" text-anchor="middle" font-size="12" fill="#888">最强</text>
-        <text x="80" y="94" text-anchor="middle" font-size="17" font-weight="800" fill="${WX_COLORS[topWx.e]}">${topWx.e} ${topWx.pct.toFixed(1)}%</text>
-      </svg>
+      <canvas id="wxPieCanvas" width="160" height="160" style="width:160px;height:160px;flex-shrink:0;display:block"></canvas>
       <div style="min-width:150px">
         ${wxPcts.map(({e,pct})=>`
           <div style="display:flex;align-items:center;gap:8px;margin:7px 0">
@@ -1424,6 +1413,7 @@ function renderResult(){
       <div><b style="color:${WX_COLORS[weakWx.e]}">${weakWx.e}能量偏弱</b>，${WX_GAP[weakWx.e]}</div>
     </div>
   `;
+  drawWuxingPie(document.getElementById('wxPieCanvas'),wxPcts,topWx,WX_COLORS);
 
   // 计算喜用神（渲染延后到成长痛点之后）
   const fav=calcFavorable(r.bazi,threeD);
