@@ -1708,7 +1708,7 @@ function genCoreSummary(dayGan,threeD,wuxing,ssWeights,top3){
   rows.push({dim:'性格特点',icon:'💫',
     tagline:(GAN_TRAIT[dayGan]||'').split('，')[0]+'、'+SS_PROS[topSS].split('，')[0],
     pros:[GAN_TRAIT[dayGan],SS_PROS[topSS]],
-    cons:[GAN_WEAK[dayGan],strong?'能量充足但易固执己见，需要练习妥协与倾听':'心思细腻但容易内耗，需要多给自己正面肯定']});
+    cons:[GAN_WEAK[dayGan]]});
 
   // —— ② 行为风格
   const BEH={
@@ -1739,7 +1739,7 @@ function genCoreSummary(dayGan,threeD,wuxing,ssWeights,top3){
     '财':{tag:'亲和随缘、人脉灵活',pros:['亲和力强，容易与人合作','懂得互利，人脉经营自然'],con:'社交面广但深交有限，需聚焦核心圈'},
   };
   rows.push({dim:'社交表现',icon:'🤝',tagline:SOC[grp].tag,pros:SOC[grp].pros,
-    cons:[SOC[grp].con+(strong?'':'；慢热型，信任建立需要时间，不必强迫自己合群')]});
+    cons:[SOC[grp].con]});
 
   // —— ⑤ 教育重点
   const TALENT_ADVICE={'独立担当':'给自己足够的自主决策空间，在承担责任中成长','竞争行动力':'用运动和有挑战的目标释放能量','才华表达':'用开放式创作滋养才华（写作/演讲/表演）','创造突破':'多尝试新事物，用创意项目放大点子多的优势','社交商业':'在真实协作与资源整合中锻炼经营能力','务实规划':'在目标管理类事项中放大规划执行力','魄力担当':'在带团队/扛项目中放大领导力','规矩执行':'在规则清晰的平台上发挥严谨优势','独立思考':'给自己留出深度钻研感兴趣领域的时间','学习吸收':'持续输入+输出，把知识变成体系','行动力':'用运动和挑战释放能量','内省思考':'用写作/复盘把思考变成输出','生长创造':'多接触创新与自然场景','热情表达':'多创造展示与影响他人的机会','稳重承载':'在长期主义的事情上深耕','精密逻辑':'用棋类/编程/乐器打磨精度','智慧灵动':'广泛阅读，跨领域输入'};
@@ -1747,7 +1747,7 @@ function genCoreSummary(dayGan,threeD,wuxing,ssWeights,top3){
   const topName=top3[0]?top3[0].name:'';
   rows.push({dim:'教育重点',icon:'🌱',tagline:'扬「'+topName+'」之长，补「'+weakEle+'」之力',
     pros:[TALENT_ADVICE[topName]||'围绕最强天赋领域投入资源与时间'],
-    cons:[GROW_WEAK[weakEle],strong?'能量足，方向比努力重要，防止用力过猛':'能量内敛，先养能量（睡眠/运动/稳定环境）再谈冲刺']});
+    cons:[GROW_WEAK[weakEle]]});
 
   return rows;
 }
