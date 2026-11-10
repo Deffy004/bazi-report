@@ -684,37 +684,24 @@ async function exportPDF(){
       });
       
       const imgData = canvas.toDataURL('image/jpeg', 0.85);
-      const imgWidth = contentWidth;
-      const imgHeight = canvas.height * imgWidth / canvas.width;
       const availH = pageHeight - margin*2;
+      let imgWidth = contentWidth;
+      let imgHeight = canvas.height * imgWidth / canvas.width;
 
-      if(imgHeight <= availH){
-        // 卡片能放进一页：放不下就整体移到新页，绝不跨页裁断
-        if(yPos + imgHeight > pageHeight - margin){
-          pdf.addPage();
-          yPos = margin;
-        }
-        pdf.addImage(imgData, 'JPEG', margin, yPos, imgWidth, imgHeight);
-        yPos += imgHeight + 8;
-      }else{
-        // 卡片比一页还高：按页高把原图切成若干片，每片独占一页
-        if(yPos > margin){ pdf.addPage(); yPos = margin; }
-        const pxPerPage = Math.floor(availH * canvas.width / imgWidth); // 源图每页可放的像素高度
-        let srcY = 0;
-        while(srcY < canvas.height){
-          const h = Math.min(pxPerPage, canvas.height - srcY);
-          const slice = document.createElement('canvas');
-          slice.width = canvas.width;
-          slice.height = h;
-          slice.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, h, 0, 0, canvas.width, h);
-          const sliceData = slice.toDataURL('image/jpeg', 0.85);
-          const sliceH = h * imgWidth / canvas.width;
-          pdf.addImage(sliceData, 'JPEG', margin, yPos, imgWidth, sliceH);
-          srcY += h;
-          if(srcY < canvas.height){ pdf.addPage(); yPos = margin; }
-          else{ yPos += sliceH + 8; }
-        }
+      // ★ 超高卡片等比缩小到一页内（保持比例、水平居中），任何卡片都不跨页裁断
+      if(imgHeight > availH){
+        const k = availH / imgHeight;
+        imgHeight = availH;
+        imgWidth = imgWidth * k;
       }
+      // 当前页放不下就整体移到新页
+      if(yPos + imgHeight > pageHeight - margin){
+        pdf.addPage();
+        yPos = margin;
+      }
+      const xPos = margin + (contentWidth - imgWidth)/2;
+      pdf.addImage(imgData, 'JPEG', xPos, yPos, imgWidth, imgHeight);
+      yPos += imgHeight + 8;
     }
     
     // 文件名：中文用 encodeURIComponent 兼容各浏览器
