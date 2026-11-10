@@ -577,25 +577,36 @@ async function exportPDF(){
     const reportEl = document.getElementById('pageResult');
     const name = document.getElementById('rSealChar').textContent || '用户';
     
-    // 添加标题页
-    pdf.setFontSize(22);
-    pdf.setTextColor(126,107,195);
-    pdf.text('先天能量天赋报告', pageWidth/2, 40, {align:'center'});
-    pdf.setFontSize(14);
-    pdf.setTextColor(74,74,74);
-    pdf.text(name + ' 的专属命盘', pageWidth/2, 55, {align:'center'});
-    pdf.setFontSize(10);
-    pdf.setTextColor(150,150,150);
-    pdf.text(new Date().toLocaleDateString('zh-CN'), pageWidth/2, 65, {align:'center'});
+    // ===== 标题页：临时 DOM 用 html2canvas 截图（避免 jsPDF 中文乱码） =====
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#fff;padding:80px 60px;font-family:"PingFang SC","Microsoft YaHei",sans-serif;';
+    titleDiv.innerHTML = `
+      <div style="text-align:center;padding-top:140px">
+        <div style="color:#7E6BC3;font-size:48px;font-weight:600;letter-spacing:4px">先天能量天赋报告</div>
+        <div style="color:#4A4A4A;font-size:28px;margin-top:32px">${name} 的专属命盘</div>
+        <div style="color:#969696;font-size:20px;margin-top:20px">${new Date().toLocaleDateString('zh-CN')}</div>
+        <div style="margin:80px auto 0;width:60px;height:3px;background:#7E6BC3;border-radius:2px"></div>
+        <div style="color:#BCBCBC;font-size:16px;margin-top:24px">Deffy × 先天能量工作室</div>
+      </div>`;
+    document.body.appendChild(titleDiv);
+    const titleCanvas = await html2canvas(titleDiv, {
+      scale: 2, useCORS: true, logging: false, backgroundColor: '#fff'
+    });
+    document.body.removeChild(titleDiv);
+    const titleData = titleCanvas.toDataURL('image/jpeg', 0.88);
+    const titleW = contentWidth;
+    const titleH = titleCanvas.height * titleW / titleCanvas.width;
+    pdf.addImage(titleData, 'JPEG', margin, margin, titleW, titleH);
+    pdf.addPage();
+    yPos = margin;
     
-    // 逐卡片截图并添加到 PDF
+    // ===== 逐卡片截图并添加到 PDF =====
     const cards = reportEl.querySelectorAll('.card');
-    let isFirstCard = true;
-    
     for(let i=0; i<cards.length; i++){
       const card = cards[i];
-      // 跳过微信引导卡片
-      if(card.style.background.includes('FFF8E1')) continue;
+      // 跳过微信引导卡片（背景含 FFF8E1）
+      const bg = card.getAttribute('style') || '';
+      if(bg.includes('FFF8E1') || bg.includes('#fff8e1')) continue;
       
       const canvas = await html2canvas(card, {
         scale: 2,
@@ -614,17 +625,15 @@ async function exportPDF(){
         yPos = margin;
       }
       
-      // 第一页需要跳过标题区域
-      if(isFirstCard){
-        yPos = 75;
-        isFirstCard = false;
-      }
-      
       pdf.addImage(imgData, 'JPEG', margin, yPos, imgWidth, imgHeight);
       yPos += imgHeight + 8;
     }
     
-    pdf.save(name + '_先天能量天赋报告.pdf');
+    // 文件名：中文用 encodeURIComponent 兼容各浏览器
+    const fileName = (name || '报告') + '_先天能量天赋报告.pdf';
+    pdf.save(encodeURIComponent(fileName));
+    // 部分浏览器仍需原始文件名兜底
+    // （jsPDF 2.5.1 save 内部会处理编码，加 encodeURIComponent 双保险）
     
   }catch(e){
     console.error(e);
