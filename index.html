@@ -495,13 +495,15 @@ function onProvinceChange(){
 }
 function onCityChange(){ /* 空函数，保留 */ }
 
-/* ========== 兑换码（本地校验 + 设备绑定） ========== */
+/* ========== 兑换码（本地校验 + 使用次数限制） ========== */
 const VALID_CODES=[
   'TQ-8K3M-2P9X','TQ-5N7Q-1W4Z','TQ-3L6R-9D2C','TQ-7F4T-8B5H','TQ-2J9V-6K3M',
   'TQ-4P8W-1N7Q','TQ-9D3C-5F2T','TQ-6M4X-8R1B','TQ-1H7K-3L9V','TQ-5Z2N-6W4P',
   'TQ-YYHA-GLG2','TQ-UFN9-TQNW','TQ-4JPL-VV2K','TQ-S5FH-7R2C','TQ-4A4Q-9KW7',
   'TQ-HVJ5-VDAN','TQ-3SUF-LZQ4','TQ-UKAE-UWUP','TQ-S7QK-CWQU','TQ-HLM8-QHJB',
 ];
+// 每个兑换码在当前设备上的最大使用次数
+const MAX_CODE_USES=3;
 
 /* ========== 十神映射 ========== */
 const TIAN_GAN=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
@@ -1119,11 +1121,23 @@ function startCalc(){
   },1500);
 }
 
+function getCodeUsage(){
+  try{return JSON.parse(localStorage.getItem('xq_code_usage')||'{}')}catch(e){return {}}
+}
 function verifyRedeem(){
   const code=document.getElementById('redeemCode').value.trim().toUpperCase();
   const err=document.getElementById('redeemError');
   if(!code){err.style.display='block';err.textContent='请输入兑换码';return}
   if(!VALID_CODES.includes(code)){err.style.display='block';err.textContent='兑换码无效，请检查后重试';return}
+  const usage=getCodeUsage();
+  const used=usage[code]||0;
+  if(used>=MAX_CODE_USES){
+    err.style.display='block';
+    err.textContent='该兑换码在当前设备已使用 '+MAX_CODE_USES+' 次，已达上限';
+    return;
+  }
+  usage[code]=used+1;
+  try{localStorage.setItem('xq_code_usage',JSON.stringify(usage))}catch(e){}
   err.style.display='none';
   localStorage.setItem('xingqi_code',code);
   renderResult();
