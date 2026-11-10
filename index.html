@@ -419,11 +419,21 @@
     <div style="font-size:13px;color:#E65100;font-weight:700">长按识别二维码 或 搜索微信号：<span style="background:#fff;padding:2px 10px;border-radius:6px;letter-spacing:1px">deffy004</span></div>
     <div style="font-size:11px;color:#999;margin-top:6px">添加时备注「天赋报告」优先通过</div>
   </div>
+
+  <!-- 导出 PDF 按钮 -->
+  <div style="text-align:center;margin:20px 0 40px">
+    <button class="btn btn-primary" onclick="exportPDF()" style="width:auto;padding:14px 40px;display:inline-flex;align-items:center;gap:8px">
+      <span>📄</span> 导出完整报告 PDF
+    </button>
+    <div style="font-size:11px;color:var(--text-light);margin-top:8px">保存后可随时查看、打印、分享</div>
+  </div>
 </div>
 
 <!-- JS -->
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 <script>
 /* ========== 全国省份→城市经纬度（34个省级行政区+全部地级市） ========== */
@@ -528,6 +538,84 @@ const SHISHEN_NAMES={
 
 /* ========== 全局状态 ========== */
 let state=null;
+
+/* ========== 导出 PDF ========== */
+async function exportPDF(){
+  const btn=event.target;
+  const originalText=btn.innerHTML;
+  btn.disabled=true;
+  btn.innerHTML='<span>⏳</span> 正在生成 PDF...';
+  
+  try{
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 15;
+    const contentWidth = pageWidth - margin*2;
+    let yPos = margin;
+    
+    // 获取报告容器
+    const reportEl = document.getElementById('pageResult');
+    const name = document.getElementById('rSealChar').textContent || '用户';
+    
+    // 添加标题页
+    pdf.setFontSize(22);
+    pdf.setTextColor(126,107,195);
+    pdf.text('先天能量天赋报告', pageWidth/2, 40, {align:'center'});
+    pdf.setFontSize(14);
+    pdf.setTextColor(74,74,74);
+    pdf.text(name + ' 的专属命盘', pageWidth/2, 55, {align:'center'});
+    pdf.setFontSize(10);
+    pdf.setTextColor(150,150,150);
+    pdf.text(new Date().toLocaleDateString('zh-CN'), pageWidth/2, 65, {align:'center'});
+    
+    // 逐卡片截图并添加到 PDF
+    const cards = reportEl.querySelectorAll('.card');
+    let isFirstCard = true;
+    
+    for(let i=0; i<cards.length; i++){
+      const card = cards[i];
+      // 跳过微信引导卡片
+      if(card.style.background.includes('FFF8E1')) continue;
+      
+      const canvas = await html2canvas(card, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      const imgWidth = contentWidth;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      
+      // 检查是否需要新页
+      if(yPos + imgHeight > pageHeight - margin){
+        pdf.addPage();
+        yPos = margin;
+      }
+      
+      // 第一页需要跳过标题区域
+      if(isFirstCard){
+        yPos = 75;
+        isFirstCard = false;
+      }
+      
+      pdf.addImage(imgData, 'JPEG', margin, yPos, imgWidth, imgHeight);
+      yPos += imgHeight + 8;
+    }
+    
+    pdf.save(name + '_先天能量天赋报告.pdf');
+    
+  }catch(e){
+    console.error(e);
+    alert('导出失败，请重试');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML=originalText;
+  }
+}
 
 /* ========== 工具函数 ========== */
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
