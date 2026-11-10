@@ -558,11 +558,45 @@ const SHISHEN_NAMES={
 let state=null;
 
 /* ========== 导出 PDF ========== */
+// 把 root 下所有 inline SVG 替换为 <img> data URL（html2canvas 在移动端无法正确渲染 inline SVG）
+function _replaceSvgsWithImgs(root){
+  const backups=[];
+  const svgs=root.querySelectorAll('svg');
+  svgs.forEach(svg=>{
+    const rect=svg.getBoundingClientRect();
+    const w=svg.getAttribute('width')||rect.width||160;
+    const h=svg.getAttribute('height')||rect.height||160;
+    // 序列化 SVG（含中文 text 必须用 XMLSerializer + encodeURIComponent）
+    const xml=new XMLSerializer().serializeToString(svg);
+    const dataUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+    const img=document.createElement('img');
+    img.src=dataUrl;
+    img.setAttribute('width',w);
+    img.setAttribute('height',h);
+    img.style.cssText=svg.getAttribute('style')||'';
+    backups.push({img,svg});
+    svg.parentNode.replaceChild(img,svg);
+  });
+  return backups;
+}
+// 还原：把每个 <img> 换回对应的原 SVG
+function _restoreSvgs(backups){
+  for(let i=0;i<backups.length;i++){
+    const b=backups[i];
+    if(b.img.parentNode){
+      b.img.parentNode.replaceChild(b.svg,b.img);
+    }
+  }
+}
+
 async function exportPDF(){
   const btn=event.target;
   const originalText=btn.innerHTML;
   btn.disabled=true;
   btn.innerHTML='<span>⏳</span> 正在生成 PDF...';
+  
+  // 备份 SVG 列表，finally 里强制还原
+  let svgBackups=[];
   
   try{
     const { jsPDF } = window.jspdf;
@@ -576,6 +610,9 @@ async function exportPDF(){
     // 获取报告容器
     const reportEl = document.getElementById('pageResult');
     const name = document.getElementById('rSealChar').textContent || '用户';
+    
+    // ★ 关键修复：把所有 inline SVG 替换为 img，否则 html2canvas 在移动端渲染 SVG 为空白
+    svgBackups=_replaceSvgsWithImgs(reportEl);
     
     // ===== 标题页：临时 DOM 用 html2canvas 截图（避免 jsPDF 中文乱码） =====
     const titleDiv = document.createElement('div');
@@ -632,13 +669,13 @@ async function exportPDF(){
     // 文件名：中文用 encodeURIComponent 兼容各浏览器
     const fileName = (name || '报告') + '_先天能量天赋报告.pdf';
     pdf.save(encodeURIComponent(fileName));
-    // 部分浏览器仍需原始文件名兜底
-    // （jsPDF 2.5.1 save 内部会处理编码，加 encodeURIComponent 双保险）
     
   }catch(e){
     console.error(e);
     alert('导出失败，请重试');
   }finally{
+    // ★ 无论成功失败都还原 SVG，避免破坏页面交互
+    if(svgBackups.length) _restoreSvgs(svgBackups);
     btn.disabled=false;
     btn.innerHTML=originalText;
   }
