@@ -1333,7 +1333,12 @@ function renderResult(){
     const hides=ZHI_HIDE[p.zhi]||[];
     return `<td class="hide-cell${p.isDay?' day-col':''}">${hides.map(h=>`<span class="hide-item">${gz(h.gan,calcShishen(dayGan,h.gan))}</span>`).join('')}</td>`;
   }).join('')+'</tr>';
-  html+='<tr><td class="rowlabel">五行</td>'+pillars.map(p=>`<td class="wx-cell${p.isDay?' day-col':''}"><span class="g-wx-${getWuxing(p.gan)}">${getWuxing(p.gan)}</span> <span class="g-wx-${getWuxing(p.zhi)}">${getWuxing(p.zhi)}</span></td>`).join('')+'</tr>';
+  html+='<tr><td class="rowlabel">五行</td>'+pillars.map(p=>{
+    // 天干五行 + 地支所有藏干五行（去重）
+    const wxes=new Set([getWuxing(p.gan)]);
+    (ZHI_HIDE[p.zhi]||[]).forEach(h=>wxes.add(getWuxing(h.gan)));
+    return `<td class="wx-cell${p.isDay?' day-col':''}">${[...wxes].map(w=>`<span class="g-wx-${w}">${w}</span>`).join(' ')}</td>`;
+  }).join('')+'</tr>';
   html+='</tbody></table><div style="text-align:center;margin-top:10px"><button type="button" class="bazi-collapse-btn" onclick="document.getElementById(\'hidePanel\').style.display=\'none\';document.getElementById(\'hideToggle\').style.display=\'block\'">收起</button></div></div></div>';
   document.getElementById('baziPillars').outerHTML='<div id="baziPillars">'+html+'</div>';
   document.getElementById('shishenHideBox').outerHTML='<div id="shishenHideBox" style="display:none"></div>';
