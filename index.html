@@ -599,12 +599,36 @@ function drawWuxingPie(canvas,pcts,topWx,colors){
   ctx.fillText(topWx.e+' '+topWx.pct.toFixed(1)+'%',cx,94);
 }
 
+// 导出专用：把报告内所有 canvas 替换为等尺寸 PNG <img>
+// （html2canvas 在移动端克隆 canvas 内容会得到空白位图，但 PNG data URL 图片走普通图片路径，可可靠渲染）
+function _replaceCanvasesWithImgs(root){
+  const backups=[];
+  root.querySelectorAll('canvas').forEach(cv=>{
+    try{
+      const img=document.createElement('img');
+      img.src=cv.toDataURL('image/png');
+      img.style.cssText=cv.getAttribute('style')||'';
+      backups.push({cv,img});
+      cv.parentNode.replaceChild(img,cv);
+    }catch(e){/* 单个失败不阻塞导出 */}
+  });
+  return backups;
+}
+function _restoreCanvases(backups){
+  for(let i=0;i<backups.length;i++){
+    const b=backups[i];
+    if(b.img.parentNode) b.img.parentNode.replaceChild(b.cv,b.img);
+  }
+}
+
 async function exportPDF(){
   const btn=event.target;
   const originalText=btn.innerHTML;
   btn.disabled=true;
   btn.innerHTML='<span>⏳</span> 正在生成 PDF...';
-  
+
+  let canvasBackups=[];
+
   try{
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','mm','a4');
@@ -617,6 +641,9 @@ async function exportPDF(){
     // 获取报告容器
     const reportEl = document.getElementById('pageResult');
     const name = document.getElementById('rSealChar').textContent || '用户';
+
+    // ★ 关键修复：canvas 先换成 PNG <img>，否则移动端 html2canvas 截图时 canvas 区域空白（饼图丢失）
+    canvasBackups=_replaceCanvasesWithImgs(reportEl);
     
     // ===== 标题页：临时 DOM 用 html2canvas 截图（避免 jsPDF 中文乱码） =====
     const titleDiv = document.createElement('div');
@@ -678,6 +705,7 @@ async function exportPDF(){
     console.error(e);
     alert('导出失败，请重试');
   }finally{
+    if(canvasBackups.length) _restoreCanvases(canvasBackups);
     btn.disabled=false;
     btn.innerHTML=originalText;
   }
