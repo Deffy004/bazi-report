@@ -1036,17 +1036,6 @@ function verifyRedeem(){
   const err=document.getElementById('redeemError');
   if(!code){err.style.display='block';err.textContent='请输入兑换码';return}
   if(!VALID_CODES.includes(code)){err.style.display='block';err.textContent='兑换码无效，请检查后重试';return}
-  // 读取本设备已用兑换码
-  const storeKey='xq_used_codes';
-  let used={};
-  try{used=JSON.parse(localStorage.getItem(storeKey)||'{}')}catch(e){used={}}
-  if(used[code]){
-    err.style.display='block';
-    err.textContent='该兑换码已在当前设备使用过，无法重复使用';
-    return;
-  }
-  used[code]=Date.now();
-  try{localStorage.setItem(storeKey,JSON.stringify(used))}catch(e){}
   err.style.display='none';
   localStorage.setItem('xingqi_code',code);
   renderResult();
