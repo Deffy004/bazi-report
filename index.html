@@ -863,9 +863,12 @@ const SIX_COMB={
   '午':'未','未':'午',
 };
 
-/* ========== 身强身弱判断（得令 · 得地 · 得势 三得法） ========== */
+/* ========== 身强身弱判断（得令 · 得地 · 得势 + 月令被冲 + 全局敌我修正） ========== */
 // 月令旺衰 5 状态分：旺（同类当权）30、相（印星生我）22、休（我生泄气）0、囚（我克耗气）5、死（官杀克我）-12
 const MONTH_STATE_SCORE={旺:30,相:22,休:0,囚:5,死:-12};
+// 地支六冲：子午、丑未、寅申、卯酉、辰戌、巳亥
+const SIX_CLASH={子:'午',午:'子',丑:'未',未:'丑',寅:'申',申:'寅',卯:'酉',酉:'卯',辰:'戌',戌:'辰',巳:'亥',亥:'巳'};
+
 function getMonthState(dayEle, monthEle){
   const SHENG={木:'火',火:'土',土:'金',金:'水',水:'木'};
   const KE={木:'土',火:'金',土:'水',金:'木',水:'火'};
@@ -885,40 +888,61 @@ function calc3D(bazi){
   const zhiChars=[bazi.getYearZhi(),bazi.getMonthZhi(),bazi.getDayZhi(),bazi.getTimeZhi()];
   const ganList=[bazi.getYearGan(),bazi.getMonthGan(),bazi.getDayGan(),bazi.getTimeGan()];
 
-  // ① 得令：月令旺衰状态
+  // ① 得令：月令旺衰状态（月令被冲则得令减半）
   const state=getMonthState(dayEle, monthEle);
-  const d=MONTH_STATE_SCORE[state];
+  let d=MONTH_STATE_SCORE[state];
+  const monthClashed = SIX_CLASH[bazi.getMonthZhi()] && zhiChars.includes(SIX_CLASH[bazi.getMonthZhi()]);
+  if(monthClashed && d>0) d=Math.round(d*0.5);  // 得令被冲，减半
+  if(monthClashed && d<0) d=Math.round(d*0.7);  // 失令被冲，凶性略减
 
   // ② 得地：地支同类藏干根气（本气根10，余气根5）
-  //    命中三合局的地支，根气打5折（土根被合化削弱）
+  //    三合合化或六冲的地支，根气打5折
   const combined=new Set();
   THREE_COMBINATIONS.forEach(({s})=>{
     if(s.every(x=>zhiChars.includes(x))) s.forEach(x=>combined.add(x));
   });
-
   let di=0;
   zhiChars.forEach((z,i)=>{
     const hides=ZHI_HIDE[z]||[];
     if(!hides.length) return;
     const benqi=hides[0].gan;
-    const coeff=combined.has(z)?0.5:1.0;
+    let coeff=combined.has(z)?0.5:1.0;
+    const clashed = SIX_CLASH[z] && zhiChars.includes(SIX_CLASH[z]);
+    if(clashed) coeff*=0.5; // 根气被冲再减半
     hides.forEach(h=>{
-      if(GAN_WUXING[h.gan]===dayEle){
-        di += (h.gan===benqi?10:5) * coeff;
-      }
+      if(GAN_WUXING[h.gan]===dayEle) di+=(h.gan===benqi?10:5)*coeff;
     });
   });
   di=Math.round(di);
 
   // ③ 得势：天干同类（非日主）帮身
-  //    得令时每个 +12，不得令时每个 +7（失令帮身力弱）
-  const isDeling=(state==='旺'||state==='相');
+  //    得令且月令未被冲时每个 +12，否则 +7
+  const isDeling=(state==='旺'||state==='相') && !monthClashed;
   const perGan=isDeling?12:7;
   let ds=0;
   [ganList[0],ganList[1],ganList[3]].forEach(g=>{ if(GAN_WUXING[g]===dayEle) ds+=perGan; });
 
+  // ④ 全局敌我修正：生我/同我 vs 克我/我生/我克 的力量对比
+  const SHENG_ME={木:'水',火:'木',土:'火',金:'土',水:'金'};
+  const KE_ME={木:'金',火:'水',土:'木',金:'火',水:'土'};
+  const WO_SHENG={木:'火',火:'土',土:'金',金:'水',水:'木'};
+  const WO_KE={木:'土',火:'金',土:'水',金:'木',水:'火'};
+  let support=0, against=0;
+  ganList.forEach(g=>{
+    const e=GAN_WUXING[g];
+    if(e===dayEle||e===SHENG_ME[dayEle]) support+=15;
+    else if(e===KE_ME[dayEle]||e===WO_SHENG[dayEle]||e===WO_KE[dayEle]) against+=15;
+  });
+  zhiChars.forEach((z,i)=>{
+    const e=ZHI_WUXING[z];
+    const w=(i===1)?15:10;
+    if(e===dayEle||e===SHENG_ME[dayEle]) support+=w;
+    else if(e===KE_ME[dayEle]||e===WO_SHENG[dayEle]||e===WO_KE[dayEle]) against+=w;
+  });
+  const balance=Math.max(-15,Math.min(10,Math.round((support-against)/3)));
+
   // 总分 & 判定
-  const score=Math.round(d+di+ds);
+  const score=Math.round(d+di+ds+balance);
   let verdict;
   if(score>=50) verdict='身强';
   else if(score>=35) verdict='偏强';
@@ -928,8 +952,8 @@ function calc3D(bazi){
 
   return{
     score,verdict,strong,
-    state,d,di,ds,
-    detail:`得令(${state})${d>=0?'+':''}${d} · 得地+${di} · 得势+${ds} = ${score} → ${verdict}`,
+    state,d,di,ds,balance,
+    detail:`得令(${state}${monthClashed?',被冲':''})${d>=0?'+':''}${d} · 得地+${di} · 得势+${ds} · 敌我${balance>=0?'+':''}${balance} = ${score} → ${verdict}`,
   };
 }
 
