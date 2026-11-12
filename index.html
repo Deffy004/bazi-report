@@ -845,42 +845,109 @@ function calcWuxingScores(bazi){
 }
 
 /* ========== 日主三维评估 ========== */
-function calc3D(bazi,strength){
+/* ========== 地支三合局定义（旺衰判断用） ========== */
+// 巳酉丑合金、申子辰合水、亥卯未合木、寅午戌合火
+// 命中则合局地支的藏干 60% 归入合化五行、40% 留在原五行（半化）
+const THREE_COMBINATIONS=[
+  {ele:'金', s:['巳','酉','丑']},
+  {ele:'水', s:['申','子','辰']},
+  {ele:'木', s:['亥','卯','未']},
+  {ele:'火', s:['寅','午','戌']},
+];
+// 地支六合（次要，影响较弱，但如果命中对根气也有削弱）
+const SIX_COMB={
+  '子':'丑','丑':'子',
+  '寅':'亥','亥':'寅',
+  '卯':'戌','戌':'卯',
+  '辰':'酉','酉':'辰',
+  '巳':'申','申':'巳',
+  '午':'未','未':'午',
+};
+
+/* ========== 身强身弱判断（综合能量法，考虑月令+三合合化+党众平衡+根气） ========== */
+function calc3D(bazi){
+  const GAN_WUXING=window._WUXING_GAN||{'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水'};
+  const ZHI_WUXING=window._WUXING_ZHI||{子:'水',丑:'土',寅:'木',卯:'木',辰:'土',巳:'火',午:'火',未:'土',申:'金',酉:'金',戌:'土',亥:'水'};
   const dayGan=bazi.getDayGan();
   const dayEle=GAN_WUXING[dayGan];
   const monthZhi=bazi.getMonthZhi();
   const monthEle=ZHI_WUXING[monthZhi];
+  const zhiChars=[bazi.getYearZhi(),bazi.getMonthZhi(),bazi.getDayZhi(),bazi.getTimeZhi()];
+  const ganList=[bazi.getYearGan(),bazi.getMonthGan(),bazi.getDayGan(),bazi.getTimeGan()];
 
-  // 得令：月令是否生扶日主（同我、生我）
-  let d=0;
-  if(monthEle===dayEle) d=25; // 同我
-  else if((monthEle==='木'&&dayEle==='火')||(monthEle==='火'&&dayEle==='土')||(monthEle==='土'&&dayEle==='金')||(monthEle==='金'&&dayEle==='水')||(monthEle==='水'&&dayEle==='木')) d=25; // 生我
-  else d=10;
-
-  let di=0;
-  const zhiList=[bazi.getYearZhi(),bazi.getMonthZhi(),bazi.getDayZhi(),bazi.getTimeZhi()];
-  zhiList.forEach(z=>{
-    (ZHI_HIDE[z]||[]).forEach(h=>{if(GAN_WUXING[h.gan]===dayEle) di+=h.weight});
+  // Step1：统计原局五行能量（天干15分、地支藏干按权重，月令柱系数1.5，其余1.0）
+  let ele={木:0,火:0,土:0,金:0,水:0};
+  ganList.forEach(g=>ele[GAN_WUXING[g]]+=15);
+  zhiChars.forEach((z,i)=>{
+    const posCoeff = (i===1)?1.5:1.0; // 月令柱 index=1
+    (ZHI_HIDE[z]||[]).forEach(h=>{ ele[GAN_WUXING[h.gan]] += h.weight/10*10 * posCoeff; });
   });
 
-  // 得势：天干同类
-  let ds=0;
-  const ganList=[bazi.getYearGan(),bazi.getMonthGan(),bazi.getDayGan(),bazi.getTimeGan()];
-  ganList.forEach(g=>{if(GAN_WUXING[g]===dayEle) ds+=12});
+  // Step2：地支三合合化修正（半化处理，60%归合化五行、40%留原五行）
+  THREE_COMBINATIONS.forEach(({ele:newEle,s})=>{
+    if(s.every(x=>zhiChars.includes(x))){
+      s.forEach(z=>{
+        (ZHI_HIDE[z]||[]).forEach(h=>{
+          const oldEle=GAN_WUXING[h.gan];
+          const wt=h.weight/10*10;
+          ele[oldEle] -= wt*0.4;
+          ele[newEle] += wt*0.6;
+        });
+      });
+    }
+  });
+  // 防止负数
+  ['木','火','土','金','水'].forEach(e=>{ if(ele[e]<0) ele[e]=0; });
 
-  // 归一化
-  d=Math.min(30,Math.round(d));
-  di=Math.min(35,Math.round(di));
-  ds=Math.min(35,Math.round(ds));
-  const total=d+di+ds;
-  return{d,di,ds,total,verdict:total>=45?'身强':'身弱'};
+  // Step3：月令基准（核心权重）
+  let base;
+  if(monthEle===dayEle) base=55;                                         // 同我当令
+  else if((monthEle==='木'&&dayEle==='火')||(monthEle==='火'&&dayEle==='土')||
+          (monthEle==='土'&&dayEle==='金')||(monthEle==='金'&&dayEle==='水')||
+          (monthEle==='水'&&dayEle==='木')) base=50;                      // 生我当令
+  else base=30;                                                          // 不得令（克/泄/耗）
+
+  // Step4：党众平衡修正 ±30
+  // 我：生我(印) + 同我(比劫)
+  // 敌：克我(官杀) + 我生(食伤) + 我克(财)
+  const SHENG_ME={木:'水',火:'木',土:'火',金:'土',水:'金'};   // 生我（印）
+  const KE_ME={木:'金',火:'水',土:'木',金:'火',水:'土'};       // 克我（官杀）
+  const WO_SHENG={木:'火',火:'土',土:'金',金:'水',水:'木'};   // 我生（食伤）
+  const WO_KE={木:'土',火:'金',土:'水',金:'木',水:'火'};       // 我克（财）
+  const support = (ele[dayEle]||0) + (ele[SHENG_ME[dayEle]]||0);
+  const against = (ele[KE_ME[dayEle]]||0) + (ele[WO_SHENG[dayEle]]||0) + (ele[WO_KE[dayEle]]||0);
+  const balance = Math.max(-30, Math.min(30, Math.round((support-against)/2)));
+
+  // Step5：根气修正
+  let genFix=0;
+  // 日支是否为同我本气根（最重要 +8）
+  if(ZHI_WUXING[bazi.getDayZhi()]===dayEle) genFix+=8;
+  // 月/时/年支是否为同我本气根（+5 each）
+  zhiChars.forEach(z=>{ if(ZHI_WUXING[z]===dayEle && z!==bazi.getDayZhi()) genFix+=5; });
+
+  // Step6：最终分 & 判定
+  const score=base+balance+genFix;
+  let verdict;
+  if(score>=55) verdict='身强';
+  else if(score>=42) verdict='偏强';
+  else if(score>=32) verdict='偏弱';
+  else verdict='身弱';
+  // 对外：偏强归为身强分支逻辑，偏弱归为身弱
+  const strong = verdict==='身强'||verdict==='偏强';
+
+  return{
+    score,verdict,strong,
+    base,balance,genFix,
+    ele:Object.fromEntries(['木','火','土','金','水'].map(e=>[e,Math.round(ele[e])])),
+    support:Math.round(support),against:Math.round(against),
+  };
 }
 
 /* ========== 喜用神 & 性格 ========== */
 function calcFavorable(bazi,threeD){
   const dayGan=bazi.getDayGan();
   const dayEle=GAN_WUXING[dayGan];
-  const strong=threeD.verdict==='身强';
+  const strong=threeD.strong;
   let use1,use2,avoid,desc,suggestion;
 
   if(strong){
@@ -924,7 +991,7 @@ function generateDayMasterDesc(dayGan,threeD){
     '癸':'癸水为阴水，象征雨露溪泉、深邃内敛。癸水日主的人智慧深沉、直觉敏锐、内敛含蓄。',
   };
   const base=descs[dayGan]||'';
-  const strong=threeD.verdict==='身强';
+  const strong=threeD.strong;
   const end=strong?' 日主身强，能量充足，宜加约束引导方向。':' 日主身弱，能量偏收，宜多滋养鼓励释放。';
   return base+end;
 }
@@ -946,7 +1013,7 @@ function generateTags(dayGan,threeD,bazi){
   const monthGan=bazi.getMonthGan();
   if(monthGan==='辛'||monthGan==='丁') tags.push('规则意识','重诺守信');
   if(monthGan==='己'||monthGan==='戊') tags.push('务实稳重');
-  tags.push(threeD.verdict==='身强'?'独立自主':'有同理心');
+  tags.push(threeD.strong?'独立自主':'有同理心');
   return [...new Set(tags)].slice(0,8);
 }
 
@@ -1366,8 +1433,8 @@ function renderResult(){
   document.getElementById('rTime').textContent=bi[1]||'';
 
   // ① 十天干卡通形象 + 身强身弱解释
-  const wd=threeD.verdict==='身强'?GAN_STRONG_DESC[dayGan]:GAN_WEAK_DESC[dayGan];
-  const verdictTag=threeD.verdict==='身强'?
+  const wd=threeD.strong?GAN_STRONG_DESC[dayGan]:GAN_WEAK_DESC[dayGan];
+  const verdictTag=threeD.strong?
     '<span style="background:#E8F5E9;color:#2E7D32;padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px">⚡ 身强（能量充足）</span>':
     '<span style="background:#E3F2FD;color:#1565C0;padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px">🍃 身弱（能量内敛）</span>';
   // 日主元素色（用于卡通形象的柔光底座/展台）
@@ -1617,7 +1684,7 @@ function renderResult(){
       benefit_weak:'带来智慧、灵感与应变力，增强思考深度与共情能力',
       daily:'多喝水、泡脚或泡澡；尝试写作、画画等创作；睡前静心复盘，让思绪流动'},
   };
-  const strong=threeD.verdict==='身强';
+  const strong=threeD.strong;
   const WX_EMOJI={'木':'🌱','火':'🔥','土':'🏔️','金':'⚔️','水':'💧'};
   const renderFav=(e,role,emoji,color,label)=>{
     const info=FAV_INFO[e];
@@ -1666,11 +1733,11 @@ function generateCharDesc(dayGan,threeD,topEle,topSS){
   };
   const eleTags={'木':'活力','火':'热情','土':'稳重','金':'完美','水':'智慧'};
   const tags=[shishenTags[topSS]||'',eleTags[topEle]||''].filter(Boolean);
-  if(threeD.verdict==='身强') tags.push('行动力强');
+  if(threeD.strong) tags.push('行动力强');
   else tags.push('心思细腻');
   return {
     tags:['核心性格',...tags.slice(0,3)],
-    desc:`${descs[dayGan]||''}。最强五行是「${topEle}」，代表${eleTags[topEle]||''}的能量；最强十神是「${topSS}」，体现${shishenTags[topSS]||''}的特质。${threeD.verdict==='身强'?'能量充足，做事有冲劲':'能量内敛，思考有深度'}。`
+    desc:`${descs[dayGan]||''}。最强五行是「${topEle}」，代表${eleTags[topEle]||''}的能量；最强十神是「${topSS}」，体现${shishenTags[topSS]||''}的特质。${threeD.strong?'能量充足，做事有冲劲':'能量内敛，思考有深度'}。`
   };
 }
 
@@ -1700,9 +1767,9 @@ function matchHero(bazi,dayGan,threeD,ssWeights){
   // 官印相生（身弱，官印有力）
   if((g('正官')+g('七杀'))>12&&(g('正印')+g('偏印'))>12&&threeD.verdict==='身弱') return HERO_DB.find(h=>h.key==='印旺身弱+官透');
   // 伤官+身强（伤官旺，身强）
-  if(g('伤官')>18&&threeD.verdict==='身强') return HERO_DB.find(h=>h.key==='伤官格+身强');
+  if(g('伤官')>18&&threeD.strong) return HERO_DB.find(h=>h.key==='伤官格+身强');
   // 正官+身强（正官旺，身强）
-  if(g('正官')>15&&threeD.verdict==='身强') return HERO_DB.find(h=>h.key==='正官格+身强');
+  if(g('正官')>15&&threeD.strong) return HERO_DB.find(h=>h.key==='正官格+身强');
   // 比劫+食伤生财（比劫旺，食伤生财）
   if((g('比肩')+g('劫财'))>15&&(g('食神')+g('伤官'))>12&&(g('正财')+g('偏财'))>8) return HERO_DB.find(h=>h.key==='比劫格+食伤生财');
 
@@ -1738,7 +1805,7 @@ function calcTopTalents(wuxing,ssWeights,threeD){
   }
   // 不够补身强身弱
   if(top3.length<3){
-    const fb=threeD.verdict==='身强'?
+    const fb=threeD.strong?
       {name:'行动力',desc:'八字整体能量充足，精力旺盛、行动力强，适合开拓性、对抗性领域。',careers:['运动员','创业','军事','项目管理']}:
       {name:'内省思考',desc:'八字整体能量内敛，心思细腻、善于观察和思考，适合深耕型、研究型领域。',careers:['研究','写作','教育','心理咨询']};
     while(top3.length<3) top3.push(fb);
@@ -1749,7 +1816,7 @@ function calcTopTalents(wuxing,ssWeights,threeD){
 /* ========== 核心要点速览（五大维度，规则推导简化版） ========== */
 function genCoreSummary(dayGan,threeD,wuxing,ssWeights,top3){
   const g=k=>ssWeights[k]||0;
-  const strong=threeD.verdict==='身强';
+  const strong=threeD.strong;
   // 最强十神 & 所属组
   const topSS=Object.entries(ssWeights).sort((a,b)=>b[1]-a[1])[0][0];
   const groupOf=s=>({比肩:'比劫',劫财:'比劫',食神:'食伤',伤官:'食伤',正财:'财',偏财:'财',正官:'官杀',七杀:'官杀',正印:'印',偏印:'印'}[s]||'印');
