@@ -518,7 +518,7 @@ const VALID_CODES=[
   'TQ-7V3G-XRPT','TQ-9HHR-RT6E','TQ-3A99-8HSE','TQ-M5NA-HR5T','TQ-5X3K-KEGF',
   'TQ-DJWP-Q8HE','TQ-NHUT-2T2D','TQ-3JU7-98CJ','TQ-CA74-7GUC','TQ-B85J-8DME'
 ];
-// 每个兑换码在当前设备上的最大使用次数
+// 每个兑换码的最大使用次数
 const MAX_CODE_USES=3;
 
 /* ========== 十神映射 ========== */
@@ -1232,7 +1232,7 @@ function verifyRedeem(){
   const used=usage[code]||0;
   if(used>=MAX_CODE_USES){
     err.style.display='block';
-    err.textContent='该兑换码在当前设备已使用 '+MAX_CODE_USES+' 次，已达上限';
+    err.textContent='该兑换码已用完，请联系客服获取新码';
     return;
   }
   usage[code]=used+1;
