@@ -863,82 +863,73 @@ const SIX_COMB={
   '午':'未','未':'午',
 };
 
-/* ========== 身强身弱判断（综合能量法，考虑月令+三合合化+党众平衡+根气） ========== */
+/* ========== 身强身弱判断（得令 · 得地 · 得势 三得法） ========== */
+// 月令旺衰 5 状态分：旺（同类当权）30、相（印星生我）22、休（我生泄气）0、囚（我克耗气）5、死（官杀克我）-12
+const MONTH_STATE_SCORE={旺:30,相:22,休:0,囚:5,死:-12};
+function getMonthState(dayEle, monthEle){
+  const SHENG={木:'火',火:'土',土:'金',金:'水',水:'木'};
+  const KE={木:'土',火:'金',土:'水',金:'木',水:'火'};
+  if(monthEle===dayEle) return '旺';             // 同类当令
+  if(SHENG[monthEle]===dayEle) return '相';       // 月令生我（印）
+  if(SHENG[dayEle]===monthEle) return '休';       // 我生月令（食伤泄气）
+  if(KE[dayEle]===monthEle) return '囚';          // 我克月令（财耗）
+  return '死';                                     // 月令克我（官杀）
+}
+
 function calc3D(bazi){
   const GAN_WUXING=window._WUXING_GAN||{'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水'};
   const ZHI_WUXING=window._WUXING_ZHI||{子:'水',丑:'土',寅:'木',卯:'木',辰:'土',巳:'火',午:'火',未:'土',申:'金',酉:'金',戌:'土',亥:'水'};
   const dayGan=bazi.getDayGan();
   const dayEle=GAN_WUXING[dayGan];
-  const monthZhi=bazi.getMonthZhi();
-  const monthEle=ZHI_WUXING[monthZhi];
+  const monthEle=ZHI_WUXING[bazi.getMonthZhi()];
   const zhiChars=[bazi.getYearZhi(),bazi.getMonthZhi(),bazi.getDayZhi(),bazi.getTimeZhi()];
   const ganList=[bazi.getYearGan(),bazi.getMonthGan(),bazi.getDayGan(),bazi.getTimeGan()];
 
-  // Step1：统计原局五行能量（天干15分、地支藏干按权重，月令柱系数1.5，其余1.0）
-  let ele={木:0,火:0,土:0,金:0,水:0};
-  ganList.forEach(g=>ele[GAN_WUXING[g]]+=15);
+  // ① 得令：月令旺衰状态
+  const state=getMonthState(dayEle, monthEle);
+  const d=MONTH_STATE_SCORE[state];
+
+  // ② 得地：地支同类藏干根气（本气根10，余气根5）
+  //    命中三合局的地支，根气打5折（土根被合化削弱）
+  const combined=new Set();
+  THREE_COMBINATIONS.forEach(({s})=>{
+    if(s.every(x=>zhiChars.includes(x))) s.forEach(x=>combined.add(x));
+  });
+
+  let di=0;
   zhiChars.forEach((z,i)=>{
-    const posCoeff = (i===1)?1.5:1.0; // 月令柱 index=1
-    (ZHI_HIDE[z]||[]).forEach(h=>{ ele[GAN_WUXING[h.gan]] += h.weight/10*10 * posCoeff; });
+    const hides=ZHI_HIDE[z]||[];
+    if(!hides.length) return;
+    const benqi=hides[0].gan;
+    const coeff=combined.has(z)?0.5:1.0;
+    hides.forEach(h=>{
+      if(GAN_WUXING[h.gan]===dayEle){
+        di += (h.gan===benqi?10:5) * coeff;
+      }
+    });
   });
+  di=Math.round(di);
 
-  // Step2：地支三合合化修正（半化处理，60%归合化五行、40%留原五行）
-  THREE_COMBINATIONS.forEach(({ele:newEle,s})=>{
-    if(s.every(x=>zhiChars.includes(x))){
-      s.forEach(z=>{
-        (ZHI_HIDE[z]||[]).forEach(h=>{
-          const oldEle=GAN_WUXING[h.gan];
-          const wt=h.weight/10*10;
-          ele[oldEle] -= wt*0.4;
-          ele[newEle] += wt*0.6;
-        });
-      });
-    }
-  });
-  // 防止负数
-  ['木','火','土','金','水'].forEach(e=>{ if(ele[e]<0) ele[e]=0; });
+  // ③ 得势：天干同类（非日主）帮身
+  //    得令时每个 +12，不得令时每个 +7（失令帮身力弱）
+  const isDeling=(state==='旺'||state==='相');
+  const perGan=isDeling?12:7;
+  let ds=0;
+  [ganList[0],ganList[1],ganList[3]].forEach(g=>{ if(GAN_WUXING[g]===dayEle) ds+=perGan; });
 
-  // Step3：月令基准（核心权重）
-  let base;
-  if(monthEle===dayEle) base=55;                                         // 同我当令
-  else if((monthEle==='木'&&dayEle==='火')||(monthEle==='火'&&dayEle==='土')||
-          (monthEle==='土'&&dayEle==='金')||(monthEle==='金'&&dayEle==='水')||
-          (monthEle==='水'&&dayEle==='木')) base=50;                      // 生我当令
-  else base=30;                                                          // 不得令（克/泄/耗）
-
-  // Step4：党众平衡修正 ±30
-  // 我：生我(印) + 同我(比劫)
-  // 敌：克我(官杀) + 我生(食伤) + 我克(财)
-  const SHENG_ME={木:'水',火:'木',土:'火',金:'土',水:'金'};   // 生我（印）
-  const KE_ME={木:'金',火:'水',土:'木',金:'火',水:'土'};       // 克我（官杀）
-  const WO_SHENG={木:'火',火:'土',土:'金',金:'水',水:'木'};   // 我生（食伤）
-  const WO_KE={木:'土',火:'金',土:'水',金:'木',水:'火'};       // 我克（财）
-  const support = (ele[dayEle]||0) + (ele[SHENG_ME[dayEle]]||0);
-  const against = (ele[KE_ME[dayEle]]||0) + (ele[WO_SHENG[dayEle]]||0) + (ele[WO_KE[dayEle]]||0);
-  const balance = Math.max(-30, Math.min(30, Math.round((support-against)/2)));
-
-  // Step5：根气修正
-  let genFix=0;
-  // 日支是否为同我本气根（最重要 +8）
-  if(ZHI_WUXING[bazi.getDayZhi()]===dayEle) genFix+=8;
-  // 月/时/年支是否为同我本气根（+5 each）
-  zhiChars.forEach(z=>{ if(ZHI_WUXING[z]===dayEle && z!==bazi.getDayZhi()) genFix+=5; });
-
-  // Step6：最终分 & 判定
-  const score=base+balance+genFix;
+  // 总分 & 判定
+  const score=Math.round(d+di+ds);
   let verdict;
-  if(score>=55) verdict='身强';
-  else if(score>=42) verdict='偏强';
-  else if(score>=32) verdict='偏弱';
+  if(score>=50) verdict='身强';
+  else if(score>=35) verdict='偏强';
+  else if(score>=18) verdict='偏弱';
   else verdict='身弱';
-  // 对外：偏强归为身强分支逻辑，偏弱归为身弱
   const strong = verdict==='身强'||verdict==='偏强';
 
   return{
     score,verdict,strong,
-    base,balance,genFix,
-    ele:Object.fromEntries(['木','火','土','金','水'].map(e=>[e,Math.round(ele[e])])),
-    support:Math.round(support),against:Math.round(against),
+    state,d,di,ds,
+    detail:`得令(${state})${d>=0?'+':''}${d} · 得地+${di} · 得势+${ds} = ${score} → ${verdict}`,
   };
 }
 
